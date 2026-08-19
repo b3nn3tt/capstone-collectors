@@ -17,7 +17,7 @@ This file records the exact collector versions imported into this repository and
 | Final freeze tag | NOT YET FROZEN | NOT YET FROZEN |
 | Final artefact checksum | NOT YET FROZEN | NOT YET FROZEN |
 
-The authoritative public snapshot begins with this repository's import commit. The SHA of that commit will be recorded after the hygiene amendment.
+The authoritative public snapshot begins with import commit 81f201307613e341c607b027e62fe5076b5ff9b9.
 
 ## Import rules
 
