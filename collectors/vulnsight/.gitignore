@@ -1,0 +1,39 @@
+# Local configuration and secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Raw acquisition evidence — never commit scan output
+evidence/
+*.nessus
+*.nessus.part
+*.part
+evidence/raw/**/*.manifest.json
+**/raw/nessus/*.manifest.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Testing and tooling caches
+tranche*-pytest-output.txt
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Environments
+.venv/
+venv/
+env/
+
+# Editors and OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

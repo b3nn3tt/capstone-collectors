@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vulnsight"
+# The single authoritative version lives in src/vulnsight/__init__.py.
+dynamic = ["version"]
+description = "Configuration-driven contextual vulnerability prioritisation (Tranche 2: Nessus connectivity preflight, read-only scan and history discovery, and explicit native .nessus export with an acquisition manifest)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [{ name = "Christopher Hunter-Bennett" }]
+
+dependencies = [
+    "requests>=2.31",
+    "python-dotenv>=1.0",
+    # A downloaded .nessus artefact is untrusted XML. defusedxml refuses DTD
+    # declarations, entity declarations and external references, so neither
+    # entity expansion nor an external fetch can be triggered by an artefact.
+    "defusedxml>=0.7.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[project.scripts]
+vulnsight = "vulnsight.cli:run"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.dynamic]
+version = { attr = "vulnsight.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
