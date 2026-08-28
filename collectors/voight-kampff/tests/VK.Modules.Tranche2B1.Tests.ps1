@@ -309,6 +309,246 @@ Describe 'Security.DefenderAdvanced: precondition and provider handling' {
             $script:Section['defender_advanced']['tamper_protection'] | Should -BeFalse
         }
     }
+
+    # ============================================================
+    #  ASR no-rule sentinel and its malformed neighbours (2.1.1)
+    # ============================================================
+    #
+    # LIVE EDGE CASE. With no ASR rules configured, Get-MpPreference under
+    # Windows PowerShell 5.1 returns a MATCHED PAIR of arrays each holding
+    # exactly one $null element - not two empty arrays. The module contract
+    # requires "no configured rules" to be a successful empty result.
+    #
+    # Only that exact pair is normalised. The Contexts below assert each
+    # neighbouring shape still fails closed, so the repair cannot widen into
+    # a general null filter.
+
+    Context 'when Defender returns the live no-rule sentinel' {
+
+        BeforeEach {
+            Start-VKAcquisition -UnitId 'security.antivirus.products' -DataPaths @('security.antivirus.product_name')
+            Complete-VKAcquisition -UnitId 'security.antivirus.products'
+
+            Mock Get-MpPreference {
+                # The exact observed shape: one null id, one null action.
+                [pscustomobject]@{
+                    AttackSurfaceReductionRules_Ids     = @($null)
+                    AttackSurfaceReductionRules_Actions = @($null)
+                    EnableNetworkProtection             = 1
+                    EnableControlledFolderAccess        = 0
+                    PUAProtection                       = 1
+                    MAPSReporting                       = 2
+                    SubmitSamplesConsent                = 1
+                }
+            }
+            Mock Get-MpComputerStatus { [pscustomobject]@{ IsTamperProtected = $true } }
+
+            $script:Section = New-TestSection
+            $script:Section['antivirus'] = [ordered]@{ 'product_name' = 'Windows Defender' }
+
+            Invoke-VKSecurityDefenderAdvanced -Data $script:Section -IsAdmin $false
+            Complete-VKAcquisitionReport
+            $script:Report = Get-VKAcquisitionReport
+        }
+
+        It 'records the ASR unit as success' {
+            $script:Report['security.defender_advanced.asr_rules'].acquisition_outcome | Should -Be 'success'
+        }
+
+        It 'emits an empty rule array rather than a withheld collection' {
+            # Off-pipeline identity check: @() and $null are indistinguishable
+            # once piped, and telling them apart is the whole contract here.
+            [object]::ReferenceEquals($null, $script:Section['defender_advanced']['asr_rules']) | Should -BeFalse
+            @($script:Section['defender_advanced']['asr_rules']).Count | Should -Be 0
+        }
+
+        It 'reports zero configured and zero blocking rules' {
+            $script:Section['defender_advanced']['asr_rules_count']    | Should -Be 0
+            $script:Section['defender_advanced']['asr_rules_blocking'] | Should -Be 0
+        }
+    }
+
+    Context 'when a null identifier is paired with a non-null action' {
+
+        BeforeEach {
+            Start-VKAcquisition -UnitId 'security.antivirus.products' -DataPaths @('security.antivirus.product_name')
+            Complete-VKAcquisition -UnitId 'security.antivirus.products'
+
+            Mock Get-MpPreference {
+                [pscustomobject]@{
+                    AttackSurfaceReductionRules_Ids     = @($null)
+                    AttackSurfaceReductionRules_Actions = @(1)
+                    EnableNetworkProtection             = 1
+                    EnableControlledFolderAccess        = 0
+                    PUAProtection                       = 1
+                    MAPSReporting                       = 2
+                    SubmitSamplesConsent                = 1
+                }
+            }
+            Mock Get-MpComputerStatus { [pscustomobject]@{ IsTamperProtected = $true } }
+
+            $script:Section = New-TestSection
+            $script:Section['antivirus'] = [ordered]@{ 'product_name' = 'Windows Defender' }
+
+            Invoke-VKSecurityDefenderAdvanced -Data $script:Section -IsAdmin $false
+            Complete-VKAcquisitionReport
+            $script:Report = Get-VKAcquisitionReport
+        }
+
+        It 'still treats the result as malformed and withholds the ASR unit' {
+            $script:Report['security.defender_advanced.asr_rules'].acquisition_outcome | Should -Not -Be 'success'
+            $script:Section['defender_advanced']['asr_rules']       | Should -BeNullOrEmpty
+            $script:Section['defender_advanced']['asr_rules_count'] | Should -BeNullOrEmpty
+        }
+    }
+
+    Context 'when a non-null identifier is paired with a null action' {
+
+        BeforeEach {
+            Start-VKAcquisition -UnitId 'security.antivirus.products' -DataPaths @('security.antivirus.product_name')
+            Complete-VKAcquisition -UnitId 'security.antivirus.products'
+
+            Mock Get-MpPreference {
+                [pscustomobject]@{
+                    AttackSurfaceReductionRules_Ids     = @('9e6c4e1f-7d60-472f-ba1a-a39ef669e4b2')
+                    AttackSurfaceReductionRules_Actions = @($null)
+                    EnableNetworkProtection             = 1
+                    EnableControlledFolderAccess        = 0
+                    PUAProtection                       = 1
+                    MAPSReporting                       = 2
+                    SubmitSamplesConsent                = 1
+                }
+            }
+            Mock Get-MpComputerStatus { [pscustomobject]@{ IsTamperProtected = $true } }
+
+            $script:Section = New-TestSection
+            $script:Section['antivirus'] = [ordered]@{ 'product_name' = 'Windows Defender' }
+
+            Invoke-VKSecurityDefenderAdvanced -Data $script:Section -IsAdmin $false
+            Complete-VKAcquisitionReport
+            $script:Report = Get-VKAcquisitionReport
+        }
+
+        It 'still treats the result as malformed and never defaults the action to Disabled' {
+            $script:Report['security.defender_advanced.asr_rules'].acquisition_outcome | Should -Not -Be 'success'
+            $script:Section['defender_advanced']['asr_rules'] | Should -BeNullOrEmpty
+        }
+    }
+
+    Context 'when a null element appears inside an otherwise populated result' {
+
+        BeforeEach {
+            Start-VKAcquisition -UnitId 'security.antivirus.products' -DataPaths @('security.antivirus.product_name')
+            Complete-VKAcquisition -UnitId 'security.antivirus.products'
+
+            Mock Get-MpPreference {
+                # Counts match and neither array is the single-null sentinel,
+                # so the normalisation must not fire and the null identifier
+                # must still be rejected.
+                [pscustomobject]@{
+                    AttackSurfaceReductionRules_Ids     = @('9e6c4e1f-7d60-472f-ba1a-a39ef669e4b2', $null)
+                    AttackSurfaceReductionRules_Actions = @(1, 2)
+                    EnableNetworkProtection             = 1
+                    EnableControlledFolderAccess        = 0
+                    PUAProtection                       = 1
+                    MAPSReporting                       = 2
+                    SubmitSamplesConsent                = 1
+                }
+            }
+            Mock Get-MpComputerStatus { [pscustomobject]@{ IsTamperProtected = $true } }
+
+            $script:Section = New-TestSection
+            $script:Section['antivirus'] = [ordered]@{ 'product_name' = 'Windows Defender' }
+
+            Invoke-VKSecurityDefenderAdvanced -Data $script:Section -IsAdmin $false
+            Complete-VKAcquisitionReport
+            $script:Report = Get-VKAcquisitionReport
+        }
+
+        It 'still treats the result as malformed rather than filtering the null away' {
+            $script:Report['security.defender_advanced.asr_rules'].acquisition_outcome | Should -Not -Be 'success'
+            $script:Section['defender_advanced']['asr_rules'] | Should -BeNullOrEmpty
+        }
+    }
+
+    Context 'when exactly one genuinely configured rule is returned' {
+
+        # The closest neighbour to the sentinel: single-element arrays whose
+        # elements are NOT null. The normalisation must not fire.
+
+        BeforeEach {
+            Start-VKAcquisition -UnitId 'security.antivirus.products' -DataPaths @('security.antivirus.product_name')
+            Complete-VKAcquisition -UnitId 'security.antivirus.products'
+
+            Mock Get-MpPreference {
+                [pscustomobject]@{
+                    AttackSurfaceReductionRules_Ids     = @('9e6c4e1f-7d60-472f-ba1a-a39ef669e4b2')
+                    AttackSurfaceReductionRules_Actions = @(1)
+                    EnableNetworkProtection             = 1
+                    EnableControlledFolderAccess        = 0
+                    PUAProtection                       = 1
+                    MAPSReporting                       = 2
+                    SubmitSamplesConsent                = 1
+                }
+            }
+            Mock Get-MpComputerStatus { [pscustomobject]@{ IsTamperProtected = $true } }
+
+            $script:Section = New-TestSection
+            $script:Section['antivirus'] = [ordered]@{ 'product_name' = 'Windows Defender' }
+
+            Invoke-VKSecurityDefenderAdvanced -Data $script:Section -IsAdmin $false
+            Complete-VKAcquisitionReport
+            $script:Report = Get-VKAcquisitionReport
+        }
+
+        It 'is not mistaken for the no-rule sentinel' {
+            $script:Section['defender_advanced']['asr_rules_count']    | Should -Be 1
+            $script:Section['defender_advanced']['asr_rules_blocking'] | Should -Be 1
+            $script:Section['defender_advanced']['asr_rules'][0]['action_text'] | Should -Be 'Block'
+        }
+
+        It 'records the ASR unit as success' {
+            $script:Report['security.defender_advanced.asr_rules'].acquisition_outcome | Should -Be 'success'
+        }
+    }
+
+    Context 'when the arrays are unequal and one side is the null sentinel' {
+
+        BeforeEach {
+            Start-VKAcquisition -UnitId 'security.antivirus.products' -DataPaths @('security.antivirus.product_name')
+            Complete-VKAcquisition -UnitId 'security.antivirus.products'
+
+            Mock Get-MpPreference {
+                [pscustomobject]@{
+                    AttackSurfaceReductionRules_Ids     = @($null)
+                    AttackSurfaceReductionRules_Actions = @()
+                    EnableNetworkProtection             = 1
+                    EnableControlledFolderAccess        = 0
+                    PUAProtection                       = 1
+                    MAPSReporting                       = 2
+                    SubmitSamplesConsent                = 1
+                }
+            }
+            Mock Get-MpComputerStatus { [pscustomobject]@{ IsTamperProtected = $true } }
+
+            $script:Section = New-TestSection
+            $script:Section['antivirus'] = [ordered]@{ 'product_name' = 'Windows Defender' }
+
+            Invoke-VKSecurityDefenderAdvanced -Data $script:Section -IsAdmin $false
+            Complete-VKAcquisitionReport
+            $script:Report = Get-VKAcquisitionReport
+        }
+
+        It 'retains the unequal-count behaviour and withholds the ASR unit' {
+            $script:Report['security.defender_advanced.asr_rules'].acquisition_outcome | Should -Not -Be 'success'
+            $script:Section['defender_advanced']['asr_rules'] | Should -BeNullOrEmpty
+        }
+
+        It 'does not invalidate the independent protection-preference evidence' {
+            $script:Report['security.defender_advanced.protection_preferences'].acquisition_outcome | Should -Be 'success'
+            $script:Section['defender_advanced']['network_protection'] | Should -Be 'Enabled'
+        }
+    }
 }
 
 
@@ -827,6 +1067,152 @@ Describe 'Security.WinRM: service, registry and listeners' {
 
         It 'preserves the independent server registry evidence' {
             $script:Report['security.winrm.server_registry'].acquisition_outcome | Should -Be 'success'
+        }
+    }
+
+    Context 'when the WSMAN keys are present but hold no values' {
+
+        # LIVE EDGE CASE (2.1.1).
+        #
+        # A host that has never had WinRM explicitly configured has WSMAN
+        # keys that EXIST and hold no registry values at all. Get-ItemProperty
+        # completes without error and emits no object. That is a present,
+        # value-empty key - a genuine observation - not a read failure.
+
+        BeforeEach {
+            Mock Get-CimInstance { [pscustomobject]@{ State = 'Stopped'; StartMode = 'Manual' } }
+            Mock Test-Path       { $true }
+            # Empty mock body: the provider answers, emitting nothing.
+            Mock Get-ItemProperty { }
+            Mock Get-ChildItem    { @() }
+
+            $script:Section = New-TestSection
+            Invoke-VKSecurityWinRM -Data $script:Section -IsAdmin $false
+            Complete-VKAcquisitionReport
+            $script:Report = Get-VKAcquisitionReport
+        }
+
+        It 'applies the documented server defaults, every field marked default_inferred' {
+            $script:Section['winrm']['allow_unencrypted']              | Should -BeFalse
+            $script:Section['winrm']['server_auth']['basic']           | Should -BeFalse
+            $script:Section['winrm']['server_auth']['kerberos']        | Should -BeTrue
+            $script:Section['winrm']['server_auth']['negotiate']       | Should -BeTrue
+            $script:Section['winrm']['server_auth']['credssp']         | Should -BeFalse
+            $script:Section['winrm']['server_auth']['certificate']     | Should -BeFalse
+
+            $sources = $script:Section['winrm']['server_value_sources']
+            $sources | Should -Not -BeNullOrEmpty
+            foreach ($key in $sources.Keys) {
+                $sources[$key] | Should -Be 'default_inferred'
+            }
+        }
+
+        It 'completes the server registry unit successfully' {
+            $script:Report['security.winrm.server_registry'].acquisition_outcome | Should -Be 'success'
+        }
+
+        It 'applies the documented client defaults, every field marked default_inferred' {
+            $script:Section['winrm']['client_allow_unencrypted'] | Should -BeFalse
+            $script:Section['winrm']['client_auth']['basic']     | Should -BeFalse
+            $script:Section['winrm']['client_auth']['kerberos']  | Should -BeTrue
+            $script:Section['winrm']['client_auth']['negotiate'] | Should -BeTrue
+            $script:Section['winrm']['client_auth']['credssp']   | Should -BeFalse
+
+            $sources = $script:Section['winrm']['client_value_sources']
+            $sources | Should -Not -BeNullOrEmpty
+            foreach ($key in $sources.Keys) {
+                $sources[$key] | Should -Be 'default_inferred'
+            }
+        }
+
+        It 'completes the client registry unit successfully' {
+            $script:Report['security.winrm.client_registry'].acquisition_outcome | Should -Be 'success'
+        }
+
+        It 'records trusted_hosts as null with a successful acquisition' {
+            # An absent TrustedHosts value on a readable Client key is a
+            # genuine observation: no trusted hosts are configured.
+            $script:Section['winrm']['trusted_hosts'] | Should -BeNullOrEmpty
+            $script:Report['security.winrm.trusted_hosts'].acquisition_outcome | Should -Be 'success'
+        }
+
+        It 'manufactures no configured TrustedHosts value' {
+            # Two distinct claims: the value is absent, and it was not
+            # replaced by a string that would read as a configured host list.
+            $value = $script:Section['winrm']['trusted_hosts']
+            ($value -is [string]) | Should -BeFalse
+        }
+    }
+
+    Context 'when the WSMAN key read throws' {
+
+        # The contrast that defines the repair: a value-empty key succeeds,
+        # but a THROWN read or access error must still fail closed.
+
+        BeforeEach {
+            Mock Get-CimInstance  { [pscustomobject]@{ State = 'Running'; StartMode = 'Auto' } }
+            Mock Test-Path        { $true }
+            Mock Get-ItemProperty { throw (New-DeniedError) }
+            Mock Get-ChildItem    { @() }
+
+            $script:Section = New-TestSection
+            Invoke-VKSecurityWinRM -Data $script:Section -IsAdmin $false
+            Complete-VKAcquisitionReport
+            $script:Report = Get-VKAcquisitionReport
+        }
+
+        It 'records <_> as non-success' -ForEach @(
+            'security.winrm.server_registry'
+            'security.winrm.client_registry'
+            'security.winrm.trusted_hosts'
+        ) {
+            $script:Report[$_].acquisition_outcome | Should -Not -Be 'success'
+        }
+
+        It 'licenses no inferred default after a failed read' {
+            foreach ($path in @(
+                'allow_unencrypted', 'server_auth', 'server_value_sources',
+                'client_auth', 'client_allow_unencrypted', 'client_value_sources',
+                'trusted_hosts'
+            )) {
+                $script:Section['winrm'][$path] | Should -BeNullOrEmpty -Because "$path must not carry an inferred value after a failed read"
+            }
+        }
+    }
+
+    Context 'when explicit values are configured' {
+
+        BeforeEach {
+            Mock Get-CimInstance { [pscustomobject]@{ State = 'Running'; StartMode = 'Auto' } }
+            Mock Test-Path       { $true }
+            Mock Get-ItemProperty {
+                # AllowKerberos = 0 is an explicit value that CONTRADICTS the
+                # documented default of $true, so a default incorrectly
+                # applied over it is directly detectable.
+                [pscustomobject]@{ AllowBasic = 1; AllowKerberos = 0; AllowUnencrypted = 1; TrustedHosts = 'fixture-host' }
+            }
+            Mock Get-ChildItem   { @() }
+
+            $script:Section = New-TestSection
+            Invoke-VKSecurityWinRM -Data $script:Section -IsAdmin $false
+            Complete-VKAcquisitionReport
+            $script:Report = Get-VKAcquisitionReport
+        }
+
+        It 'retains explicit values and marks them explicit' {
+            $script:Section['winrm']['server_auth']['basic'] | Should -BeTrue
+            $script:Section['winrm']['allow_unencrypted']    | Should -BeTrue
+            $script:Section['winrm']['server_value_sources']['server_auth.basic'] | Should -Be 'explicit'
+            $script:Section['winrm']['server_value_sources']['allow_unencrypted'] | Should -Be 'explicit'
+            $script:Section['winrm']['trusted_hosts'] | Should -Be 'fixture-host'
+        }
+
+        It 'does not overwrite an explicit value with the documented default' {
+            $script:Section['winrm']['server_auth']['kerberos'] | Should -BeFalse
+            $script:Section['winrm']['server_value_sources']['server_auth.kerberos'] | Should -Be 'explicit'
+
+            $script:Section['winrm']['client_auth']['kerberos'] | Should -BeFalse
+            $script:Section['winrm']['client_value_sources']['client_auth.kerberos'] | Should -Be 'explicit'
         }
     }
 }

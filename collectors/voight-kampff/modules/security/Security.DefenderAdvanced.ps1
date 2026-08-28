@@ -42,9 +42,22 @@
       valid protection-preference evidence from the same Get-MpPreference
       response is retained, because it does not depend on the ASR arrays.
 
+    ASR NO-RULE SENTINEL (2.1.1)
+    On a host with no ASR rules configured, Get-MpPreference under Windows
+    PowerShell 5.1 returns a MATCHED PAIR of arrays each holding exactly one
+    $null element, rather than two empty arrays. That is the provider's live
+    representation of "no configured rules", which the contract above
+    requires to be a SUCCESSFUL empty result, not a malformed one.
+
+    The normalisation below is exact and matches only that pair. Nulls are
+    never filtered generally: unequal counts, a null identifier paired with
+    a non-null action, a non-null identifier paired with a null action, and
+    a null element inside an otherwise populated result all remain malformed
+    and still withhold the ASR unit.
+
 .NOTES
     Author:  b3nn3tt@hbcomputersecurity.co.uk
-    Version: 2.1.0
+    Version: 2.1.1
 #>
 
 function Invoke-VKSecurityDefenderAdvanced {
@@ -217,6 +230,28 @@ function Invoke-VKSecurityDefenderAdvanced {
 
             $ruleIds     = @($prefs.AttackSurfaceReductionRules_Ids)
             $ruleActions = @($prefs.AttackSurfaceReductionRules_Actions)
+
+            # LIVE NO-RULE SENTINEL.
+            #
+            # A host with no ASR rules configured returns a matched pair of
+            # single-element arrays, each element $null. The provider is
+            # reporting "no configured rules", which the module contract
+            # requires to be a successful empty result - not the malformed
+            # result the null-identifier guard below would otherwise make of
+            # it.
+            #
+            # The match is deliberately EXACT: both arrays must hold exactly
+            # one element AND both of those elements must be $null. Nothing
+            # else is normalised, so every other shape - unequal counts, a
+            # null paired with a non-null in either direction, or a null
+            # inside a populated result - still reaches the guards below and
+            # still fails closed.
+            if ($ruleIds.Count -eq 1 -and $ruleActions.Count -eq 1 -and
+                $null -eq $ruleIds[0] -and $null -eq $ruleActions[0]) {
+
+                $ruleIds     = @()
+                $ruleActions = @()
+            }
 
             # A rule id with no corresponding action is a malformed result.
             # Defaulting the action to 0 would assert that the rule is

@@ -39,7 +39,7 @@ function New-VKMinimalValidArtefact {
     return [ordered]@{
         "scan_metadata" = [ordered]@{
             "schema_version"        = "1.1"
-            "agent_version"         = "2.1.0"
+            "agent_version"         = "2.1.1"
             "hostname"              = "INVALID-FIXTURE-01"
             "running_user"          = "FIXTUREDOM\fixture.user"
             "running_user_sid"      = "S-1-5-21-1111111111-2222222222-3333333333-1001"
@@ -54,7 +54,7 @@ function New-VKMinimalValidArtefact {
                 "observation_start"   = "2026-08-18T09:14:10Z"
                 "observation_end"     = "2026-08-18T09:14:11Z"
                 "acquisition_outcome" = "success"
-                "agent_version"       = "2.1.0"
+                "agent_version"       = "2.1.1"
                 "schema_version"      = "1.1"
                 "data_paths"          = @("security.antivirus.product_name")
                 "error"               = $null

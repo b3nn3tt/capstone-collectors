@@ -10,6 +10,112 @@ All notable changes to the collector and its evidence contract.
 
 ---
 
+## [2.1.1] — live-provider edge-case repair
+
+**Schema version: 1.1 — unchanged. JSON depth: 10 — unchanged. 45 modules and 46 acquisition units — unchanged.**
+
+A PATCH increment: three bug fixes with **no evidence-contract change**. No field path is added, removed or changed in meaning, no acquisition unit is added or removed, and no analytical or compliance judgement is introduced.
+
+> **Tested, built, transferred, live-run and preserved — not merged, not tagged, not frozen.**
+>
+> **Executed test result:** Windows PowerShell **Desktop 5.1.26100.9168**, Pester **6.1.0**, caller-imposed StrictMode **Off** — **646 total, 646 passed, 0 failed, 0 skipped, 0 inconclusive, 0 not run**, suite result **`Passed`**, definitive committed-source duration **`00:00:18.5527668`**.
+>
+> The `617 passed / 0 failed / 0 skipped / 0 not run` result recorded below for 2.1.0 is preserved as the **2.1.0 baseline**. It was the last executed result at the time this entry was first authored, and it is **superseded as the latest executed result** by the run above.
+>
+> **The earlier 21-failure result was validation-harness contamination caused by caller-imposed `StrictMode`, not 21 production defects.** The clean rerun passed all 646 tests. That figure is not a defect count.
+>
+> Published on branch `fix/voight-live-provider-edge-cases` at commit `afa421ead68d94a678d96766424c6ead9f689933` — one commit ahead of `origin/main`, zero behind, repository clean when pushed. **Unmerged. No pull request exists. Not tagged, not frozen, not pilot-ready, not campaign-ready.**
+
+### Context
+
+An elevated standalone run completed structurally — all 45 modules executed, all 46 acquisition units emitted, 41 `success`, 5 `unavailable`, 0 `failed`, 0 `restricted`, schema validation passed. Read-only follow-up established that all five `unavailable` outcomes shared one shape: **a provider that answered successfully but represented a genuine zero result in a form the module read as malformed or absent**. In each case the fail-closed guard was correct in principle and mis-scoped in practice, so a legitimate observation was suppressed rather than a fabricated one prevented.
+
+None of the three defects fabricated evidence. Each **withheld** evidence the host had in fact supplied, which is the milder failure direction but still understates what was observed.
+
+### Fixed — three live edge cases
+
+1. **`Host.Software` — a value-empty uninstall subkey failed the whole hive.** Both uninstall hives existed and were readable (native: 17 subkeys, 6 readable objects, 11 empty property results, 0 read errors; WOW6432: 20 / 9 / 11 / 0). The stock `AddressBook` subkey holds no registry values at all, so `Get-ItemProperty` completed **without error and emitted no object**. `Get-VKSoftwareHiveEntries` treated that `$null` as an unreadable entry and threw, which under the shared-path completeness rule withheld the entire combined `host.installed_software` inventory and recorded both hive units `unavailable`. A successfully read, value-empty key is now **skipped exactly like an entry with no `DisplayName`** — a documented filter, not a failure. `-ErrorAction Stop` is retained unchanged: a genuine provider or read failure still throws, still fails the hive closed, and still withholds the combined payload.
+
+2. **`Security.WinRM` — a present, value-empty WSMAN key was read as absent.** The WSMAN Client key existed, was readable, held no property values, and had no configured `TrustedHosts` value. `Get-ItemProperty` emitted no object, and both `security.winrm.client_registry` and `security.winrm.trusted_hosts` recorded `unavailable` — contradicting the module's own documented contract, which states that absent values take the documented Windows defaults with provenance `default_inferred`, and that an absent `TrustedHosts` value is a genuine observation meaning no trusted hosts are configured. A key that exists and is read successfully but emits no property object is now treated as a **present, value-empty key**: server and client authentication and `AllowUnencrypted` take their documented defaults, every inferred field is marked `default_inferred`, the applicable unit completes `success`, and `trusted_hosts` is recorded as `$null` with `security.winrm.trusted_hosts = success`. No configured `TrustedHosts` value is ever manufactured. A **missing** key (terminating `Test-Path` returns false) and a **thrown** read or access error both remain non-success and fail closed. Server and client handling are repaired identically, so the two can no longer diverge. New module-scope helper `Get-VKWinRMRegistryValue` reads named values through the `PSObject` property table rather than direct property access, so a `$null` object and an absent value behave identically and the module does not depend on permissive missing-property behaviour under `Set-StrictMode`.
+
+3. **`Security.DefenderAdvanced` — the live no-rule ASR sentinel was read as malformed.** `Get-MpPreference` returned both ASR properties present, raw identifier count 1, raw action count 1, non-null identifier count 0, non-null action count 0 — PowerShell's live representation of **no configured ASR rules**: a matched pair each holding one `$null` item. The null-identifier guard rejected it, so `security.defender_advanced.asr_rules` recorded `unavailable` where the module's documented contract requires a successful empty result. That **exact** matched pair — both arrays of length 1, both elements `$null` — is now normalised to two empty arrays before count validation and iteration, yielding `asr_rules = @()`, `asr_rules_count = 0`, `asr_rules_blocking = 0` and outcome `success`. The normalisation is deliberately narrow and does **not** filter arbitrary nulls: unequal counts, a null identifier paired with a non-null action, a non-null identifier paired with a null action, and a null element inside an otherwise populated result all still reach the existing guards and still withhold the ASR unit.
+
+### Changed
+
+- **Agent version 2.1.0 → 2.1.1.** Schema **1.1** and JSON depth **10** are unchanged, as is the 45-module / 46-acquisition-unit contract.
+- The generated standalone filename expectation moves to `VoightKampff_Standalone_v2.1.1.ps1`. The builder already derives that name from `$script:VKAgentVersion`, so no builder logic changed; the parity suite now asserts the resulting filename explicitly.
+- Version headers updated in the three repaired modules and in `build/Build-Standalone.ps1`. The representative and invalid schema-1.1 test fixtures move to `agent_version = "2.1.1"`, because the output-contract suite asserts fixture `agent_version` equals the configured agent version.
+
+### Added — 29 regression tests
+
+- **`Host.Software` (6)** — a value-empty `AddressBook`-style subkey is skipped; other named applications from the same hive remain present; both applicable hive units resolve to `success`; the combined machine-scope inventory is emitted rather than withheld; and, in direct contrast, a hive holding both a value-empty subkey and a **thrown** read failure still withholds the combined payload and still records a non-success acquisition.
+- **`Security.WinRM` (12)** — a present, value-empty server key produces the documented server defaults with `default_inferred` and a successful unit; the same for the client key; the same client key yields `trusted_hosts = $null` with a successful acquisition and no manufactured value; thrown registry errors leave all three units non-success and license no inferred default anywhere; and explicit values remain `explicit` and are not overwritten by defaults, asserted with an explicit `AllowKerberos = 0` that contradicts the documented default of `$true`.
+- **`Security.DefenderAdvanced` (10)** — the exact null/null sentinel becomes a successful empty result (asserted off-pipeline with `ReferenceEquals`, plus zero counts); null/non-null, non-null/null and null-inside-populated pairs all remain malformed; a single genuinely configured rule is not mistaken for the sentinel and still records `success`; and an unequal pair whose one side is the sentinel retains the existing unequal-count behaviour while leaving the independent protection-preference evidence intact.
+- **Standalone parity (1)** — the generated artefact is written to the `2.1.1` version-stamped filename, so a missed version bump cannot ship an artefact whose name contradicts its declared agent version.
+
+### Not changed
+
+Schema 1.1; JSON depth 10; the 45-module execution contract; the 18 study-relevant instrumented modules; the 46 acquisition units; the four-value outcome vocabulary; fail-closed behaviour for any actual provider error; VulnSight. **No field path was added, removed or changed in meaning, and no analytical or compliance judgement was added.** No target-specific exception was added and no host name is referenced anywhere in the repair.
+
+### Verification — EXECUTED
+
+| Item | Value |
+| --- | --- |
+| Runtime | Windows PowerShell **Desktop 5.1.26100.9168** |
+| Test framework | Pester **6.1.0** |
+| Caller-imposed StrictMode | **Off** |
+| Total / Passed | **646 / 646** |
+| Failed / Skipped / Inconclusive / Not run | **0 / 0 / 0 / 0** |
+| Suite result | **`Passed`** |
+| Definitive committed-source duration | **`00:00:18.5527668`** |
+
+**Chronology note.** When this entry was first authored, the 2.1.1 tests were written but had not been run, and that was stated accurately at the time. This section records the subsequent execution. The 2.1.0 result of 617/617 is preserved below as the **2.1.0 baseline**; it is no longer the latest executed result.
+
+**The earlier 21-failure result was validation-harness contamination caused by caller-imposed `StrictMode`, not 21 production defects.** The clean rerun against the committed source passed all 646 tests. That figure is not a defect count and must not be cited as one.
+
+### Build provenance — definitive build, 2026-08-28
+
+Built from branch `fix/voight-live-provider-edge-cases` at commit `afa421ead68d94a678d96766424c6ead9f689933` with the repository clean.
+
+| Field | Value |
+| --- | --- |
+| Standalone | `VoightKampff_Standalone_v2.1.1.ps1` |
+| Size | 458,575 bytes |
+| SHA-256 | `165745478f86a05426798bb5d29fd5884e09d522eca0967d9d4c28640b40d208` |
+| Embedded build time | `2026-08-28 15:31:53` — **no timezone or offset is encoded** |
+| Build manifest | `build-validation.manifest.json`, 2,781 bytes, SHA-256 `500a7436c49ca5cf4d46e0e77c11f4f34cc5a9c169078f812afd17e17e5ef175` |
+| Checksum file | `SHA256SUMS.txt`, 204 bytes, SHA-256 `fa4c4e6e37e0e349ed7f917abe670f25f56300b84967424632c78fcca53e53a3` |
+| Collector executed during the build | **No** — the generated script was parsed only |
+
+**Build reproducibility limitation — a pre-freeze engineering issue, not a defective build.** `Build-Standalone.ps1` inserts the current local wall-clock value into the generated comment header via `Built: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`. **Two correct builds from identical source can therefore have identical size but different SHA-256 values.** The disposable parity build was 458,575 bytes with SHA-256 `1547e0797d70169ca5c3b411641613181028456d806aa95f0aedc52da21f6a0c`; the definitive build was 458,575 bytes with SHA-256 `165745478f86a05426798bb5d29fd5884e09d522eca0967d9d4c28640b40d208`. **The disposable build was deleted before a byte comparison, so the timestamp is not claimed to have been proven the sole differing content** — it explains the expected non-determinism, and nothing further is asserted. No repair has been invented; the definitive artefact remains controlled through its recorded source commit, size, SHA-256, manifest and checksum file.
+
+### Live integration validation — `CAPSTONE-WIN-01`, 2026-08-28
+
+The five repaired units were confirmed on a live host. **This is an integration-validation run, not a rehearsal, a pilot, or controlled campaign evidence.** No evidence file from it is held in this repository.
+
+| Field | Value |
+| --- | --- |
+| Target | `CAPSTONE-WIN-01` |
+| Runtime | Windows PowerShell Desktop 5.1.26100.9168, elevated |
+| Process exit code | `0` |
+| Duration | 24.53 seconds |
+| Agent / schema | 2.1.1 / 1.1 |
+| Modules executed | 45 (45 unique) |
+| Acquisition units | 46 |
+| Outcomes | **46 `success`, 0 `failed`, 0 `restricted`, 0 `unavailable`** |
+
+The five repaired units — `host.software.hklm_native`, `host.software.hklm_wow6432`, `security.winrm.client_registry`, `security.winrm.trusted_hosts` and `security.defender_advanced.asr_rules` — were each **present exactly once and each returned `success`**, against the five `unavailable` outcomes the same units produced at 2.1.0.
+
+**Windows Update error-log limitation.** One line was written to the collector's operational error log during the run: a `Host.WindowsUpdates` pending-update search failure, `Exception from HRESULT: 0x80240438`. The target is deliberately isolated with no default route, gateway, DNS or external connectivity, and the failure is consistent with that isolation. `Host.WindowsUpdates` is **outside the current 46 acquisition-governed units**, so the error does **not** surface as a non-success acquisition outcome. Consequently: **no claim may be made that there were zero pending updates, and no substantive interpretation may be assigned to an empty pending-update collection after this error.** This is a provenance-extension / pre-freeze issue. The error-log timestamp is **timezone-unqualified local wall-clock text**, whereas the evidence JSON and the manifests use UTC; no timezone is assigned to it here.
+
+**Still not pilot-ready, not merged, not tagged, not frozen.** The blockers recorded against 2.1.0 below are unchanged, and no output from this build may be used as controlled research evidence.
+
+### Latent patterns deliberately left outside this repair
+
+Similar readable-but-value-empty property-object patterns remain **statically visible** in `Security.RDP`, `Security.SMB` and `Security.UAC`. Those units **succeeded on this target and no live defect was observed in them here.** They are recorded as **pre-freeze hardening candidates**, not as part of the 2.1.1 repair. The Defender ASR normalisation is likewise **intentionally limited to the exact matched null/null sentinel observed live**.
+
+---
+
 ## [2.1.0] — Tranche 2A — schema 1.1 acquisition foundation
 
 **Schema version: 1.1** (additive minor increment over 1.0)
@@ -18,7 +124,9 @@ All notable changes to the collector and its evidence contract.
 >
 > Migration of the existing study-relevant modules completed at Tranche 2B.2, and the session/recent-profile extension landed at Tranche 2C — **18 modules across 46 acquisition units**. Session and recent-profile telemetry is **no longer a blocker**, and generated-standalone metadata and contract parity are implemented and asserted against generated output.
 >
-> **Verified post-2C state:** Windows PowerShell 5.1.26100.9168, Pester 6.1.0 — **617 passed, 0 failed, 0 skipped, 0 not run**. A green suite establishes that the implemented contract behaves as specified; it does **not** make the collector controlled-collection ready and the collection version is **not frozen**.
+> **Verified post-2C state — THE 2.1.0 BASELINE, preserved as history:** Windows PowerShell 5.1.26100.9168, Pester 6.1.0 — **617 passed, 0 failed, 0 skipped, 0 not run**. A green suite establishes that the implemented contract behaves as specified; it does **not** make the collector controlled-collection ready and the collection version is **not frozen**. **This is no longer the latest executed result** — see the executed 646/646 verification under `[2.1.1]` above. It is retained unchanged as the agent 2.1.0 baseline.
+>
+> **The 2.1.0 development-validation run is also preserved.** Agent 2.1.0, schema 1.1, 45 modules, 46 acquisition units, **41 `success`, 5 `unavailable`, 0 `failed`, 0 `restricted`**. Those five `unavailable` outcomes are what prompted the 2.1.1 repair. They were **withheld evidence, never fabricated evidence** — a provider answered successfully and the module read the answer as malformed or absent. The 2.1.0 run and its capture remain preserved and are not to be deleted or rewritten.
 >
 > The remaining blockers are:
 >

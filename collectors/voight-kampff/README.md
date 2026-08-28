@@ -4,7 +4,13 @@ A PowerShell-based Windows evidence collector that produces versioned JSON outpu
 
 **Current state:** integration-pilot candidate.
 
-**Versions:** agent 2.1.0; schema 1.1; JSON depth 10.
+**Versions:** agent 2.1.1; schema 1.1; JSON depth 10.
+
+Agent 2.1.1 is a PATCH bug-fix release with **no evidence-contract change** — three live-provider edge cases where a successful zero result was read as malformed or absent. See the [changelog](CHANGELOG.md).
+
+**Tested, built and live-validated.** The 2.1.1 suite is **646 total / 646 passed / 0 failed / 0 skipped / 0 inconclusive / 0 not run**, suite result `Passed`, under Pester 6.1.0 on Windows PowerShell Desktop 5.1.26100.9168. The agent 2.1.0 result of 617/617 is preserved as the 2.1.0 baseline and is no longer the latest executed result. The 2.1.1 standalone ran on `CAPSTONE-WIN-01` and returned **46/46 acquisition units `success`**, with all five repaired units succeeding.
+
+**Branch state.** Published on `fix/voight-live-provider-edge-cases` at commit `afa421ead68d94a678d96766424c6ead9f689933`, one commit ahead of `origin/main` and zero behind, repository clean when pushed. **Unmerged; no pull request exists; not tagged; not frozen; not pilot-ready or campaign-ready.**
 
 ## Design principles
 
@@ -116,7 +122,7 @@ Used for packaging and single-file execution.
 
 ```powershell
 Set-Location ".\collectors\voight-kampff\dist"
-.\VoightKampff_Standalone_v2.1.0.ps1
+.\VoightKampff_Standalone_v2.1.1.ps1
 ```
 
 ### Building the standalone
@@ -154,12 +160,22 @@ Windows feature-state collection remains conditional on the frozen contextual re
 
 | Item | Value |
 | --- | --- |
-| Runtime | Windows PowerShell 5.1 |
-| Test framework | Pester 6.1.0 |
-| Test result | 617 passed, 0 failed, 0 skipped, 0 not run |
-| Coverage | 18 modules, 46 acquisition units |
+| Runtime | Windows PowerShell **Desktop 5.1.26100.9168** |
+| Test framework | Pester **6.1.0** |
+| Caller-imposed StrictMode | **Off** |
+| Total | **646** |
+| Passed | **646** |
+| Failed / Skipped / Inconclusive / Not run | **0 / 0 / 0 / 0** |
+| Suite result | **`Passed`** |
+| Definitive committed-source duration | `00:00:18.5527668` |
+| Coverage | 18 study-relevant modules, 46 acquisition units (unchanged at 2.1.1) |
+| Agent 2.1.0 baseline (historical) | 617 passed, 0 failed, 0 skipped, 0 not run |
 
 A green suite establishes that the implemented contract behaves as specified. It does not, by itself, make the collector ready for final controlled evidence collection — the tests verify contract behaviour against mocked providers, not live provider behaviour on target hosts.
+
+**On the earlier 21-failure result.** An earlier validation attempt reported 21 failures. That was **validation-harness contamination caused by caller-imposed `StrictMode`, not 21 production defects.** The clean rerun against the committed source, with caller-imposed StrictMode `Off`, passed all **646** tests. The 21-failure figure must not be cited as a defect count.
+
+**Live provider behaviour.** Separately from the mocked suite, the 2.1.1 standalone was run once on `CAPSTONE-WIN-01` and returned 45 modules executed and **46/46 acquisition units `success`**. That is an integration-validation run — **not** a rehearsal, a pilot, or controlled campaign evidence.
 
 ## Running the tests
 

@@ -37,7 +37,7 @@
 
 .NOTES
     Author:  b3nn3tt@hbcomputersecurity.co.uk
-    Version: 2.1.0
+    Version: 2.1.1
 #>
 
 param(

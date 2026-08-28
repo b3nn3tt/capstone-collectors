@@ -2,9 +2,17 @@
 
 Pester suite covering the runner contract, the schema 1.1 output contract, the fail-closed acquisition helpers, every migrated module across **all current tranches through 2C**, and modular/standalone parity.
 
-**Authoritative execution result:** Windows PowerShell 5.1.26100.9168, Pester 6.1.0 — **617 passed, 0 failed, 0 skipped, 0 not run**. Coverage spans **18 study-relevant modules and 46 acquisition units** at agent 2.1.0, schema 1.1, JSON depth 10.
+**Authoritative execution result — agent 2.1.1:** Windows PowerShell **Desktop 5.1.26100.9168**, Pester **6.1.0**, caller-imposed StrictMode **Off** — **646 total, 646 passed, 0 failed, 0 skipped, 0 inconclusive, 0 not run**, suite result **`Passed`**, definitive committed-source duration **`00:00:18.5527668`**. Coverage spans **18 study-relevant modules and 46 acquisition units** at agent 2.1.1, schema 1.1, JSON depth 10.
+
+**Agent 2.1.0 baseline (historical, preserved):** Windows PowerShell 5.1.26100.9168, Pester 6.1.0 — **617 passed, 0 failed, 0 skipped, 0 not run** at agent 2.1.0. This was the last executed result *at the time the 2.1.1 repair was authored*, and it is retained as the 2.1.0 baseline. It is **superseded as the latest executed result** by the 646/646 run above.
+
+**On the earlier 21-failure result.** An earlier validation attempt of the 2.1.1 suite reported 21 failures. That was **validation-harness contamination caused by caller-imposed `StrictMode` — not 21 production defects.** The clean rerun against the committed source, with caller-imposed StrictMode `Off`, **passed all 646 tests**. The 21-failure figure is not a defect count and must not be cited as one.
+
+The 29 new tests are: **6** for `Host.Software` value-empty uninstall subkeys (Tranche 2B.2 file), **12** for `Security.WinRM` present-but-value-empty WSMAN keys (Tranche 2B.1 file), **10** for the `Security.DefenderAdvanced` ASR no-rule sentinel and its malformed neighbours (Tranche 2B.1 file), and **1** parity assertion that the generated standalone is written to the `2.1.1` version-stamped filename.
 
 A green suite establishes that the implemented contract behaves as specified. It does **not** make the collector pilot-ready; see the remaining blockers below.
+
+**This suite is mocked throughout, so it is not live-provider validation.** Live behaviour of the 2.1.1 repair was established separately by a single integration-validation run of the generated standalone on `CAPSTONE-WIN-01` (46/46 acquisition units `success`), recorded outside this repository in the operational workspace. That run is **not** a rehearsal, a pilot, or controlled campaign evidence, and no evidence file from it is held in this repository.
 
 **Pester is development assurance only.** It is never included in, and never required by, the generated collector. The standalone script depends only on Windows PowerShell 5.1 and built-in Windows providers — the parity suite asserts this explicitly.
 
@@ -96,7 +104,7 @@ Static AST analysis. `Host.NetworkConfig` invoked exactly once by the runner and
 
 | Area | Asserts |
 | --- | --- |
-| Central config | agent 2.1.0, schema 1.1, depth 10 |
+| Central config | agent 2.1.1, schema 1.1, depth 10 |
 | Envelope | **exactly five** sections, in order — an exact match, deliberately not a subset or containment check |
 | Metadata | all ten required fields, ISO 8601 UTC timestamps, no duplicate in `modules_executed` |
 | Acquisition | **exact schema-1.1 coverage of all 46 units, asserted in both directions** — every instrumented unit present, and no entry that is not an instrumented unit; all required fields; permitted four-value vocabulary; nothing pending or incomplete; `success` ⇒ `error` null; non-success ⇒ structured error; valid UTC timestamps; populated `data_paths`; no stack traces; no payload duplicated under `acquisition` |
@@ -120,7 +128,7 @@ All providers mocked.
 
 ### VK.StandaloneParity.Tests.ps1
 
-Static parity of all ten metadata fields and all five envelope sections between runner and build source; both take `schema_version` and depth from central config; both initialise and finalise acquisition; the build captures the identity needed for `running_user_sid`. Then, against the **generated** script in `TestDrive`: parses without syntax errors; declares schema 1.1, agent 2.1.0, depth 10; emits all metadata and sections; contains every acquisition helper it calls (AST cross-check of called versus defined); contains **all 46 current unit identifiers** across Tranches 2A, 2B.1, 2B.2 and 2C; no longer contains the corrected false-evidence pathways. Dependency-freedom: no Pester, no `Import-Module`, no `#Requires -Modules`, no gallery/HTTP/SQL/Python references, no test-only validator, no PowerShell 7-only syntax. Build-source checks confirm `-Quiet`/`-PassThru` exist and that the build never invokes its own output.
+Static parity of all ten metadata fields and all five envelope sections between runner and build source; both take `schema_version` and depth from central config; both initialise and finalise acquisition; the build captures the identity needed for `running_user_sid`. Then, against the **generated** script in `TestDrive`: parses without syntax errors; declares schema 1.1, agent 2.1.1, depth 10, and is written to the `VoightKampff_Standalone_v2.1.1.ps1` version-stamped filename; emits all metadata and sections; contains every acquisition helper it calls (AST cross-check of called versus defined); contains **all 46 current unit identifiers** across Tranches 2A, 2B.1, 2B.2 and 2C; no longer contains the corrected false-evidence pathways. Dependency-freedom: no Pester, no `Import-Module`, no `#Requires -Modules`, no gallery/HTTP/SQL/Python references, no test-only validator, no PowerShell 7-only syntax. Build-source checks confirm `-Quiet`/`-PassThru` exist and that the build never invokes its own output.
 
 **No test is silently skipped.** Generation runs in a `BeforeAll` during the run phase, never behind a `-Skip:` expression evaluated at discovery. If the build fails, that is surfaced as a **failing test** carrying the captured `GenerationError`, and the dependent tests fail on their own assertions rather than disappearing from the report. The authoritative run records **0 skipped and 0 not run**.
 
@@ -130,6 +138,8 @@ The seven modules migrated in Tranche 2B.1, all providers mocked. Per module: a 
 
 Highlights: DefenderAdvanced's precondition handling and a `Should -Invoke Get-CimInstance -Times 0` assertion proving it no longer re-queries SecurityCenter2; the mismatched-ASR case proving the missing action never defaults to `"Disabled"` while protection preferences survive; SMB's `explicit` vs `default_inferred` vs `feature_observed` provenance and the no-admin `insufficient_privilege` path; RDP's separated registry units and guarded properties; WinRM's `"Unknown"` removal and part-way listener failure; UAC's absent-value guards; FDE's non-elevated registration and malformed-volume withholding.
 
+**Agent 2.1.1 additions in this file (executed and passing).** `Security.WinRM` gains a present-but-**value-empty** WSMAN key case — documented server and client defaults applied with every field marked `default_inferred`, both registry units `success`, `trusted_hosts` `$null` with a `success` outcome and no manufactured host list — directly contrasted against a **thrown** read, which still yields non-success on all three units and licenses no inferred default, and against **explicit** values, including an explicit `AllowKerberos = 0` that contradicts the documented default and must not be overwritten by it. `Security.DefenderAdvanced` gains the live **ASR no-rule sentinel** (a matched pair of single-`$null` arrays) resolving to `success` with `@()` / `0` / `0`, asserted off-pipeline with `ReferenceEquals`, plus four neighbouring shapes that must all still fail closed — null id with non-null action, non-null id with null action, a null inside an otherwise populated result, and an unequal pair where one side is the sentinel — and a single genuinely configured rule that must not be mistaken for the sentinel.
+
 A final **parameterised** Describe drives all seven modules into a total provider denial at once and asserts the shared contract: every unit registered, none `success`, all within the permitted vocabulary, all with populated `data_paths` and structured error data — plus two recursive payload walks proving no fabricated value (`"Unknown"`, `"Not Found"`, `"Disabled"`, `"Not Fully Encrypted"`, `"Protection Off"`) and no non-null leaf survives anywhere in the section.
 
 ### VK.Modules.Tranche2B2.Tests.ps1
@@ -137,6 +147,8 @@ A final **parameterised** Describe drives all seven modules into a total provide
 The seven host/pathway modules migrated in Tranche 2B.2, all providers mocked.
 
 Highlights: Identification's guarded `BuildNumber` (never cast to `0`) and proof that a BIOS/manufacturer failure cannot change any study unit's outcome; NetworkConfig's summary counts staying **`$null` rather than `0`** after a failed TCP collection while the independent UDP unit keeps its numeric count; Services and Processes never emitting a zero-count console line after failure (asserted with `Should -Invoke … -ParameterFilter`); Software's per-entry failure making a hive incomplete, the combined list withheld when any applicable hive fails, and a genuinely empty hive staying `@()` rather than collapsing to `$null` through `Sort-Object`; Users' removed in-band sentinel, `is_admin` null-not-false after a member-query failure, UTC timestamp formatting and local-only scope markers; and the token unit's non-zero-exit, malformed-CSV and missing-column paths plus the `collector_token_only` / `collector_ran_as_admin` qualifiers.
+
+**Agent 2.1.1 additions in this file (executed and passing).** `Host.Software` gains a **value-empty uninstall subkey** case: the provider completes without error and emits no object, the subkey is skipped like any entry with no `DisplayName`, other named applications from the same hive survive, both applicable hive units resolve to `success` and the combined machine-scope inventory is emitted. It is directly contrasted against a hive holding both a value-empty subkey and a **thrown** read failure, which must still withhold the combined payload and record a non-success outcome.
 
 A final parameterised Describe denies every provider at once and asserts the shared contract across all twelve units — including that both instrumented summary counts remain null. `host.identification.hostname` is legitimately excluded from the "no successes" assertion because it reads an environment variable rather than a mocked provider.
 

@@ -565,6 +565,100 @@ Describe 'Host.Software: two hives, one combined path' {
         }
     }
 
+    Context 'when a hive contains a value-empty subkey' {
+
+        # LIVE EDGE CASE (2.1.1).
+        #
+        # The stock "AddressBook" uninstall subkey holds no registry values
+        # at all. Get-ItemProperty completes WITHOUT error and emits no
+        # object, so the read succeeded and there is simply nothing to read.
+        # That is not an unreadable entry, and treating it as one withheld
+        # the entire combined machine-scope inventory on a live host.
+
+        BeforeEach {
+            Mock Test-Path { $true }
+            Mock Get-ChildItem {
+                @(
+                    [pscustomobject]@{ PSPath = 'HKLM:\AddressBook' }
+                    [pscustomobject]@{ PSPath = 'HKLM:\app1' }
+                )
+            }
+            # Empty mock body: the provider answers, emitting nothing.
+            Mock Get-ItemProperty { } -ParameterFilter { $Path -eq 'HKLM:\AddressBook' }
+            Mock Get-ItemProperty {
+                [pscustomobject]@{ DisplayName = 'Fixture Reader'; DisplayVersion = '21.4.1'; Publisher = 'Fixture' }
+            } -ParameterFilter { $Path -eq 'HKLM:\app1' }
+
+            $script:Section = New-TestSection
+            Invoke-VKHostSoftware -Data $script:Section -IsAdmin $false
+            Complete-VKAcquisitionReport
+            $script:Report = Get-VKAcquisitionReport
+        }
+
+        It 'skips the value-empty subkey instead of recording it as an application' {
+            $names = @($script:Section['installed_software'] | ForEach-Object { $_['name'] })
+            $names | Should -Not -Contain 'AddressBook'
+        }
+
+        It 'retains the other named applications from the same hive' {
+            $names = @($script:Section['installed_software'] | ForEach-Object { $_['name'] })
+            $names | Should -Contain 'Fixture Reader'
+        }
+
+        It 'resolves both applicable hive units to success' {
+            $script:Report['host.software.hklm_native'].acquisition_outcome | Should -Be 'success'
+
+            # WOW6432Node applicability is decided by OS architecture, never
+            # by a failed check, so on a 32-bit OS the unit is legitimately
+            # unavailable rather than success.
+            $expectedWow = if ([Environment]::Is64BitOperatingSystem) { 'success' } else { 'unavailable' }
+            $script:Report['host.software.hklm_wow6432'].acquisition_outcome | Should -Be $expectedWow
+        }
+
+        It 'emits the combined machine-scope inventory rather than withholding it' {
+            # Off-pipeline identity check: the shared-path rule withholds the
+            # combined list as $null, which @() must not be confused with.
+            [object]::ReferenceEquals($null, $script:Section['installed_software']) | Should -BeFalse
+            @($script:Section['installed_software']).Count | Should -BeGreaterThan 0
+        }
+    }
+
+    Context 'when a value-empty subkey and a thrown read failure share one hive' {
+
+        # The contrast that defines the repair: the value-empty key is
+        # skipped, but the THROWN failure alongside it must still fail the
+        # hive closed. Only actual failures withhold the payload.
+
+        BeforeEach {
+            Mock Test-Path { $true }
+            Mock Get-ChildItem {
+                @(
+                    [pscustomobject]@{ PSPath = 'HKLM:\AddressBook' }
+                    [pscustomobject]@{ PSPath = 'HKLM:\app1' }
+                    [pscustomobject]@{ PSPath = 'HKLM:\app2' }
+                )
+            }
+            Mock Get-ItemProperty { } -ParameterFilter { $Path -eq 'HKLM:\AddressBook' }
+            Mock Get-ItemProperty {
+                [pscustomobject]@{ DisplayName = 'Fixture Reader' }
+            } -ParameterFilter { $Path -eq 'HKLM:\app1' }
+            Mock Get-ItemProperty { throw (New-DeniedError) } -ParameterFilter { $Path -eq 'HKLM:\app2' }
+
+            $script:Section = New-TestSection
+            Invoke-VKHostSoftware -Data $script:Section -IsAdmin $false
+            Complete-VKAcquisitionReport
+            $script:Report = Get-VKAcquisitionReport
+        }
+
+        It 'still withholds the combined payload' {
+            $script:Section['installed_software'] | Should -BeNullOrEmpty
+        }
+
+        It 'still records a non-success acquisition for the affected hive' {
+            $script:Report['host.software.hklm_native'].acquisition_outcome | Should -Not -Be 'success'
+        }
+    }
+
     Context 'when the hive path is absent' {
 
         BeforeEach {
