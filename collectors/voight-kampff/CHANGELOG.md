@@ -10,6 +10,49 @@ All notable changes to the collector and its evidence contract.
 
 ---
 
+## [2.1.1] — live-provider edge-case repair
+
+**Schema version: 1.1 — unchanged. JSON depth: 10 — unchanged. 45 modules and 46 acquisition units — unchanged.**
+
+A PATCH increment: three bug fixes with **no evidence-contract change**. No field path is added, removed or changed in meaning, no acquisition unit is added or removed, and no analytical or compliance judgement is introduced.
+
+> **Authored, not executed.** The `617 passed / 0 failed / 0 skipped / 0 not run` result recorded below for 2.1.0 remains the **last executed** verification and is preserved as the 2.1.0 baseline. The 2.1.1 repair and its **29** new regression tests (static suite total **646**) are **authored but unexecuted**; no 2.1.1 test result is claimed.
+
+### Context
+
+An elevated standalone run completed structurally — all 45 modules executed, all 46 acquisition units emitted, 41 `success`, 5 `unavailable`, 0 `failed`, 0 `restricted`, schema validation passed. Read-only follow-up established that all five `unavailable` outcomes shared one shape: **a provider that answered successfully but represented a genuine zero result in a form the module read as malformed or absent**. In each case the fail-closed guard was correct in principle and mis-scoped in practice, so a legitimate observation was suppressed rather than a fabricated one prevented.
+
+None of the three defects fabricated evidence. Each **withheld** evidence the host had in fact supplied, which is the milder failure direction but still understates what was observed.
+
+### Fixed — three live edge cases
+
+1. **`Host.Software` — a value-empty uninstall subkey failed the whole hive.** Both uninstall hives existed and were readable (native: 17 subkeys, 6 readable objects, 11 empty property results, 0 read errors; WOW6432: 20 / 9 / 11 / 0). The stock `AddressBook` subkey holds no registry values at all, so `Get-ItemProperty` completed **without error and emitted no object**. `Get-VKSoftwareHiveEntries` treated that `$null` as an unreadable entry and threw, which under the shared-path completeness rule withheld the entire combined `host.installed_software` inventory and recorded both hive units `unavailable`. A successfully read, value-empty key is now **skipped exactly like an entry with no `DisplayName`** — a documented filter, not a failure. `-ErrorAction Stop` is retained unchanged: a genuine provider or read failure still throws, still fails the hive closed, and still withholds the combined payload.
+
+2. **`Security.WinRM` — a present, value-empty WSMAN key was read as absent.** The WSMAN Client key existed, was readable, held no property values, and had no configured `TrustedHosts` value. `Get-ItemProperty` emitted no object, and both `security.winrm.client_registry` and `security.winrm.trusted_hosts` recorded `unavailable` — contradicting the module's own documented contract, which states that absent values take the documented Windows defaults with provenance `default_inferred`, and that an absent `TrustedHosts` value is a genuine observation meaning no trusted hosts are configured. A key that exists and is read successfully but emits no property object is now treated as a **present, value-empty key**: server and client authentication and `AllowUnencrypted` take their documented defaults, every inferred field is marked `default_inferred`, the applicable unit completes `success`, and `trusted_hosts` is recorded as `$null` with `security.winrm.trusted_hosts = success`. No configured `TrustedHosts` value is ever manufactured. A **missing** key (terminating `Test-Path` returns false) and a **thrown** read or access error both remain non-success and fail closed. Server and client handling are repaired identically, so the two can no longer diverge. New module-scope helper `Get-VKWinRMRegistryValue` reads named values through the `PSObject` property table rather than direct property access, so a `$null` object and an absent value behave identically and the module does not depend on permissive missing-property behaviour under `Set-StrictMode`.
+
+3. **`Security.DefenderAdvanced` — the live no-rule ASR sentinel was read as malformed.** `Get-MpPreference` returned both ASR properties present, raw identifier count 1, raw action count 1, non-null identifier count 0, non-null action count 0 — PowerShell's live representation of **no configured ASR rules**: a matched pair each holding one `$null` item. The null-identifier guard rejected it, so `security.defender_advanced.asr_rules` recorded `unavailable` where the module's documented contract requires a successful empty result. That **exact** matched pair — both arrays of length 1, both elements `$null` — is now normalised to two empty arrays before count validation and iteration, yielding `asr_rules = @()`, `asr_rules_count = 0`, `asr_rules_blocking = 0` and outcome `success`. The normalisation is deliberately narrow and does **not** filter arbitrary nulls: unequal counts, a null identifier paired with a non-null action, a non-null identifier paired with a null action, and a null element inside an otherwise populated result all still reach the existing guards and still withhold the ASR unit.
+
+### Changed
+
+- **Agent version 2.1.0 → 2.1.1.** Schema **1.1** and JSON depth **10** are unchanged, as is the 45-module / 46-acquisition-unit contract.
+- The generated standalone filename expectation moves to `VoightKampff_Standalone_v2.1.1.ps1`. The builder already derives that name from `$script:VKAgentVersion`, so no builder logic changed; the parity suite now asserts the resulting filename explicitly.
+- Version headers updated in the three repaired modules and in `build/Build-Standalone.ps1`. The representative and invalid schema-1.1 test fixtures move to `agent_version = "2.1.1"`, because the output-contract suite asserts fixture `agent_version` equals the configured agent version.
+
+### Added — 29 regression tests
+
+- **`Host.Software` (6)** — a value-empty `AddressBook`-style subkey is skipped; other named applications from the same hive remain present; both applicable hive units resolve to `success`; the combined machine-scope inventory is emitted rather than withheld; and, in direct contrast, a hive holding both a value-empty subkey and a **thrown** read failure still withholds the combined payload and still records a non-success acquisition.
+- **`Security.WinRM` (12)** — a present, value-empty server key produces the documented server defaults with `default_inferred` and a successful unit; the same for the client key; the same client key yields `trusted_hosts = $null` with a successful acquisition and no manufactured value; thrown registry errors leave all three units non-success and license no inferred default anywhere; and explicit values remain `explicit` and are not overwritten by defaults, asserted with an explicit `AllowKerberos = 0` that contradicts the documented default of `$true`.
+- **`Security.DefenderAdvanced` (10)** — the exact null/null sentinel becomes a successful empty result (asserted off-pipeline with `ReferenceEquals`, plus zero counts); null/non-null, non-null/null and null-inside-populated pairs all remain malformed; a single genuinely configured rule is not mistaken for the sentinel and still records `success`; and an unequal pair whose one side is the sentinel retains the existing unequal-count behaviour while leaving the independent protection-preference evidence intact.
+- **Standalone parity (1)** — the generated artefact is written to the `2.1.1` version-stamped filename, so a missed version bump cannot ship an artefact whose name contradicts its declared agent version.
+
+### Not changed
+
+Schema 1.1; JSON depth 10; the 45-module and 46-acquisition-unit contract; the four-value outcome vocabulary; fail-closed behaviour for any actual provider error; VulnSight. No target-specific exception was added and no host name is referenced anywhere in the repair.
+
+**Still not pilot-ready.** The blockers recorded against 2.1.0 below are unchanged, and no output from this build may be used as controlled research evidence.
+
+---
+
 ## [2.1.0] — Tranche 2A — schema 1.1 acquisition foundation
 
 **Schema version: 1.1** (additive minor increment over 1.0)

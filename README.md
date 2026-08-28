@@ -10,7 +10,7 @@ The versions currently held here are **integration-pilot candidates**. Their uni
 
 | Collector | Pilot-candidate version | Current verification | Project role |
 | --- | --- | --- | --- |
-| [Voight-Kampff](collectors/voight-kampff/) | Agent 2.1.0; schema 1.1; JSON depth 10 | 18 modules, 46 acquisition units, 617/617 Pester tests | Collects versioned Windows endpoint evidence and explicit acquisition outcomes. |
+| [Voight-Kampff](collectors/voight-kampff/) | Agent 2.1.1; schema 1.1; JSON depth 10 | 18 modules, 46 acquisition units; last executed **617/617** Pester tests at agent 2.1.0; the 2.1.1 suite (**646** tests) is authored but not yet executed | Collects versioned Windows endpoint evidence and explicit acquisition outcomes. |
 | [VulnSight](collectors/vulnsight/) | 0.3.1; Nessus export manifest 1.1 | 781/781 pytest tests | Acquires an explicitly selected native `.nessus` export and writes its acquisition manifest and SHA-256. |
 
 These results establish behaviour against the collectors' test contracts. They do not, by themselves, establish that a real campaign is complete, that every provider works on every target, or that collected evidence is eligible for the final experiment.

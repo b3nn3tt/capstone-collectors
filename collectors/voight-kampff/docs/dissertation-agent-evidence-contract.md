@@ -1,11 +1,11 @@
 # Voight-Kampff Agent — Dissertation Evidence Contract
 
 **Status:** **Tranche 2C implemented.** Schema 1.1 acquisition foundation in place, modular/standalone parity maintained, all seventeen existing study-relevant modules migrated, and the **session and recent-profile extension** now added — **18 modules across 46 collection units**. See §8 (2A), §9 (2B.1), §10 (2B.2) and §11 (2C).
-**Agent version:** 2.1.0 (`$script:VKAgentVersion`, [VK.Config.ps1](../core/VK.Config.ps1))
-**Schema version:** 1.1 (`$script:VKSchemaVersion`; five-section envelope)
-**JSON depth:** 10 (raised from 5 — see §2.3)
-**Audit date:** 18 August 2026 (Tranche 1 audit). Implementation records: §8 (2A), §9 (2B.1), §10 (2B.2), §11 (2C).
-**Latest verification:** Windows PowerShell 5.1.26100.9168, Pester 6.1.0 — **617 passed, 0 failed, 0 skipped, 0 not run** (§11.10)
+**Agent version:** 2.1.1 (`$script:VKAgentVersion`, [VK.Config.ps1](../core/VK.Config.ps1)) — PATCH increment, **no evidence-contract change** (§12)
+**Schema version:** 1.1 (`$script:VKSchemaVersion`; five-section envelope) — **unchanged**
+**JSON depth:** 10 (raised from 5 — see §2.3) — **unchanged**
+**Audit date:** 18 August 2026 (Tranche 1 audit). Implementation records: §8 (2A), §9 (2B.1), §10 (2B.2), §11 (2C), §12 (2.1.1 live-provider repair).
+**Last executed verification:** Windows PowerShell 5.1.26100.9168, Pester 6.1.0 — **617 passed, 0 failed, 0 skipped, 0 not run** (§11.10), executed against agent **2.1.0**. The agent 2.1.1 repair and its 29 new regression tests (static suite total **646**) are **authored but unexecuted** (§12); no 2.1.1 test result is claimed.
 **Scope:** the Voight-Kampff PowerShell agent only. Backend, compliance engine, frontend, contextual scoring and Priority Index calculation are out of scope and unmodified. The approved C1–C7 meanings, contextual rules, weights, applicability and inference boundaries are unchanged.
 
 > ### ⚠ Not pilot-ready
@@ -518,7 +518,7 @@ The configured JSON depth is now **10**, and the latest verification on this run
 
 Controlled collection uses the **generated dependency-free standalone script**.
 
-*Status: **RESOLVED**, no longer blocking.* The divergence recorded at Tranche 1 — the standalone build omitting `schema_version`, `running_user` and `running_user_sid` from `scan_metadata` (§6.3) — was corrected in Tranche 2A. Metadata and contract parity are now **implemented and asserted against the generated output**, not merely against the build template: the parity suite generates the standalone into the Pester `TestDrive`, parses it, and asserts the full required `scan_metadata` field list, the five-section envelope, agent 2.1.0, schema 1.1, depth 10, every instrumented unit identifier, self-containment of the acquisition helpers, and dependency-freedom. Generation failure is surfaced as a **failing test** carrying the captured error; no generation-dependent test is skipped.
+*Status: **RESOLVED**, no longer blocking.* The divergence recorded at Tranche 1 — the standalone build omitting `schema_version`, `running_user` and `running_user_sid` from `scan_metadata` (§6.3) — was corrected in Tranche 2A. Metadata and contract parity are now **implemented and asserted against the generated output**, not merely against the build template: the parity suite generates the standalone into the Pester `TestDrive`, parses it, and asserts the full required `scan_metadata` field list, the five-section envelope, the configured agent version (**2.1.1** as of §12), schema 1.1, depth 10, the version-stamped output filename, every instrumented unit identifier, self-containment of the acquisition helpers, and dependency-freedom. Generation failure is surfaced as a **failing test** carrying the captured error; no generation-dependent test is skipped.
 
 ### 7.3 Fifth top-level `acquisition` key — **accepted for schema 1.1**
 
@@ -994,3 +994,46 @@ Executed on the controlled-collection runtime, **18 August 2026**:
 This supersedes the Tranche 1 record in §2.3, which remains as the historical schema-1.0 / depth-5 measurement.
 
 **This does not make the agent pilot-ready.** A green suite establishes that the implemented contract behaves as specified; it does not discharge the remaining blockers in §11.9, and no output from this build may be used as controlled research evidence.
+
+**This record is preserved as the last EXECUTED verification, and it was executed against agent 2.1.0.** It is not superseded by §12, which is authored but unexecuted.
+
+---
+
+## 12. Agent 2.1.1 — live-provider edge-case repair
+
+A PATCH increment with **no evidence-contract change**. Schema **1.1**, JSON depth **10**, the **45**-module execution contract and the **46**-acquisition-unit register are all unchanged, and no field path is added, removed or changed in meaning.
+
+### 12.1 What the live run established
+
+An elevated standalone run completed structurally: all 45 modules executed, all 46 acquisition units emitted, **41 `success`, 5 `unavailable`, 0 `failed`, 0 `restricted`**, schema validation passed. Read-only follow-up established that all five `unavailable` outcomes shared a single shape — **a provider that answered successfully but expressed a genuine zero result in a form the module read as malformed or absent**.
+
+This is the mirror image of the Tranche 2A fabrication class. Those defects manufactured observations the host never made; these three **withheld** observations the host did make. The failure direction is milder — no false evidence entered any artefact — but the result still understates what was observed, and each contradicted the module's own documented contract.
+
+| Affected units | Provider behaviour | Recorded | Contract requires |
+| --- | --- | --- | --- |
+| `host.software.hklm_native`, `host.software.hklm_wow6432` | Value-empty `AddressBook` uninstall subkey; `Get-ItemProperty` completed without error and emitted no object | `unavailable` on both, combined `host.installed_software` withheld | The subkey skipped like any entry with no `DisplayName`; both hives `success`; the combined inventory emitted |
+| `security.winrm.client_registry`, `security.winrm.trusted_hosts` | WSMAN Client key present and readable, holding no property values and no `TrustedHosts` value | `unavailable` on both | Documented Windows defaults applied with `default_inferred` provenance; `trusted_hosts = $null` as a genuine observation; both units `success` |
+| `security.defender_advanced.asr_rules` | Both ASR properties present; raw counts 1 and 1; non-null counts 0 and 0 — a matched pair each holding one `$null` | `unavailable` | No configured rules is a successful empty result: `@()`, count `0`, blocking `0`, outcome `success` |
+
+Neither hive nor the WSMAN key produced a single read error, so in no case was a provider failure reclassified as success.
+
+### 12.2 What changed, and what deliberately did not
+
+- **`Host.Software`** — a successfully read, value-empty subkey is skipped rather than thrown on. `-ErrorAction Stop` is retained: a genuine provider or read failure still throws, still makes the hive incomplete, and the shared-path completeness rule still withholds `host.installed_software` whenever any *applicable* hive fails.
+- **`Security.WinRM`** — server and client handling are repaired identically. A present, value-empty key licenses the documented defaults with `default_inferred` provenance and completes the unit successfully; `trusted_hosts` is `$null` with `success` and no configured value is manufactured. A **missing** key and a **thrown** read or access error both remain non-success. A new module-scope helper, `Get-VKWinRMRegistryValue`, reads named values through the `PSObject` property table so a `$null` object and an absent value behave identically, and so the module does not depend on permissive missing-property behaviour under `Set-StrictMode`.
+- **`Security.DefenderAdvanced`** — only the exact matched pair (both arrays of length 1, both elements `$null`) is normalised to two empty arrays, before count validation and iteration. Arbitrary nulls are **not** filtered: unequal counts, a null identifier with a non-null action, a non-null identifier with a null action, and a null inside an otherwise populated result all still fail closed.
+
+No analytical or compliance judgement was added, no target-specific exception was introduced, and no host name appears anywhere in the repair.
+
+### 12.3 Verification status — AUTHORED, NOT EXECUTED
+
+| Item | Value |
+| --- | --- |
+| Agent / schema / depth | **2.1.1 / 1.1 / 10** |
+| Coverage | **18 study-relevant modules, 46 acquisition units** — unchanged |
+| Execution contract | **45 modules, 46 acquisition units** — unchanged |
+| Regression tests added | **29** (Host.Software 6; Security.WinRM 12; Security.DefenderAdvanced 10; standalone parity 1) |
+| Static suite total | **646 authored** |
+| Executed result | **None. No 2.1.1 test result is claimed.** The last executed verification remains §11.10's 617 passed / 0 failed / 0 skipped / 0 not run, recorded against agent **2.1.0**. |
+
+The remaining blockers in §11.9 are unchanged, and no output from this build may be used as controlled research evidence.

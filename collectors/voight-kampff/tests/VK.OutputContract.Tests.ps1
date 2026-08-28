@@ -158,8 +158,8 @@ BeforeAll {
 
 Describe 'Central configuration' {
 
-    It 'declares agent version 2.1.0' {
-        $script:ConfiguredAgent | Should -Be '2.1.0'
+    It 'declares agent version 2.1.1' {
+        $script:ConfiguredAgent | Should -Be '2.1.1'
     }
 
     It 'declares schema version 1.1' {

@@ -208,8 +208,16 @@ Describe 'Generated standalone script' {
             $script:GeneratedText | Should -Match '\$script:VKSchemaVersion\s*=\s*"1\.1"'
         }
 
-        It 'declares agent version 2.1.0' {
-            $script:GeneratedText | Should -Match '\$script:VKAgentVersion\s*=\s*"2\.1\.0"'
+        It 'declares agent version 2.1.1' {
+            $script:GeneratedText | Should -Match '\$script:VKAgentVersion\s*=\s*"2\.1\.1"'
+        }
+
+        It 'is written to the 2.1.1 version-stamped filename' {
+            # The build stamps the configured agent version into the output
+            # file name, so a missed version bump would ship an artefact
+            # whose name contradicts its own declared agent version.
+            [System.IO.Path]::GetFileName($script:GeneratedPath) |
+                Should -Be 'VoightKampff_Standalone_v2.1.1.ps1'
         }
 
         It 'declares JSON depth 10' {

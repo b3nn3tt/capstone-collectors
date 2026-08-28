@@ -7,11 +7,11 @@ This file records the exact collector versions imported into this repository and
 | Upstream lineage | Private upstream repository: b3nn3tt/voight_kampff_windows_agent | https://github.com/b3nn3tt/vulnsight |
 | Import date | 2026-08-19 | 2026-08-19 |
 | Imported subdirectory | `collectors/voight-kampff` | `collectors/vulnsight` |
-| Tool version | Agent 2.1.0 | 0.3.1 |
+| Tool version | Agent 2.1.1 | 0.3.1 |
 | Evidence schema | Agent schema 1.1; JSON depth 10 | Nessus export manifest 1.1 |
 | Primary runtime | Windows PowerShell 5.1 | Python 3.11 |
 | Test framework | Pester 6.1.0 | pytest 9.1.1 |
-| Verified test result | 617 passed; 0 failed; 0 skipped; 0 not run | 781 passed; 0 failed |
+| Verified test result | 617 passed; 0 failed; 0 skipped; 0 not run — **last executed at agent 2.1.0**. The agent 2.1.1 suite totals **646 authored tests and has not been executed**; no 2.1.1 result is claimed. | 781 passed; 0 failed |
 | Module/unit summary | 18 modules; 46 acquisition units | Native `.nessus` acquisition and manifest workflow |
 | Current state | Integration-pilot candidate | Integration-pilot candidate |
 | Final freeze tag | NOT YET FROZEN | NOT YET FROZEN |

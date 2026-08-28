@@ -42,9 +42,18 @@
     never establish absence of a per-user installation: under the coverage
     axis of Rule 2 the result simply does not span that question.
 
+    VALUE-EMPTY SUBKEYS (2.1.1)
+    An uninstall subkey may exist and hold no registry values at all - the
+    stock "AddressBook" key is the canonical example. Reading it succeeds:
+    the provider raises no error and simply emits no object. Such a key
+    carries no DisplayName, so it is skipped by the same documented filter
+    that drops system components and update stubs. It is NOT a read failure
+    and must not withhold the hive, which would withhold the combined
+    machine-scope inventory under the shared-path rule above.
+
 .NOTES
     Author:  b3nn3tt@hbcomputersecurity.co.uk
-    Version: 2.1.0
+    Version: 2.1.1
 #>
 
 function Get-VKSoftwareHiveEntries {
@@ -57,6 +66,9 @@ function Get-VKSoftwareHiveEntries {
         single entry. A per-entry failure makes the HIVE incomplete: it
         must not silently shorten the result, which would understate the
         installed software while appearing complete.
+
+        A successfully read, VALUE-EMPTY subkey is a different case and is
+        deliberately not a failure. See the per-entry comments below.
 
     .PARAMETER RegistryPath
         The uninstall hive to enumerate.
@@ -83,14 +95,23 @@ function Get-VKSoftwareHiveEntries {
     $entries = @()
 
     foreach ($app in $apps) {
-        # -ErrorAction Stop: a single unreadable entry makes the hive
+        # -ErrorAction Stop, retained deliberately: a GENUINE provider or
+        # read failure - a denied key, a corrupt hive, a provider fault -
+        # throws here and propagates to the caller, making the whole hive
         # incomplete rather than quietly dropping one application.
         $details = Get-ItemProperty -Path $app.PSPath -ErrorAction Stop
 
-        if ($null -eq $details) {
-            throw [System.InvalidOperationException]::new(
-                "Reading '$($app.PSPath)' returned no properties.")
-        }
+        # A SUCCESSFUL read of a VALUE-EMPTY key is not that case. When a
+        # subkey holds no registry values at all, Get-ItemProperty raises no
+        # error and emits no object, so $details is $null with nothing
+        # having failed. The stock "AddressBook" uninstall key behaves this
+        # way on a live host.
+        #
+        # Such a key has no DisplayName, so it is skipped exactly like the
+        # named entries filtered immediately below - a documented filter,
+        # not a failure. Treating it as a failure would withhold the entire
+        # combined machine-scope inventory under the shared-path rule.
+        if ($null -eq $details) { continue }
 
         $name = $details.DisplayName -as [string]
 

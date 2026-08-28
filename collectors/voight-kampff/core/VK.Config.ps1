@@ -43,7 +43,7 @@
 #   no conforming acquisition entry makes the artefact schema-invalid.
 # ============================================================
 
-$script:VKAgentVersion  = "2.1.0"
+$script:VKAgentVersion  = "2.1.1"
 $script:VKSchemaVersion = "1.1"
 
 

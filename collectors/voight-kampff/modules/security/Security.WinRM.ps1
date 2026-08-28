@@ -40,14 +40,88 @@
       rather than emitting a shorter list that reads as complete.
     - A successful absence of listeners is still an empty array.
 
+    PRESENT BUT VALUE-EMPTY KEYS (2.1.1)
+    A WSMAN key may exist and hold no registry values at all, which is the
+    default state of a host that has never had WinRM explicitly configured.
+    Reading it succeeds - the provider raises no error and simply emits no
+    object - so Get-ItemProperty returns $null with nothing having failed.
+
+    That is a PRESENT, VALUE-EMPTY key and a genuine observation:
+
+      - server / client authentication and AllowUnencrypted take the
+        documented Windows defaults, every field marked default_inferred,
+        and the applicable unit completes successfully;
+      - TrustedHosts is recorded as $null with a SUCCESSFUL outcome,
+        because an absent value means no trusted hosts are configured. No
+        configured value is ever manufactured.
+
+    These remain fail-closed and non-success:
+
+      - a MISSING key (the terminating Test-Path returns false);
+      - a THROWN read or access error, which never reaches the value-empty
+        path at all.
+
+    Property access goes through Get-VKWinRMRegistryValue so a $null
+    property object and an absent value are handled identically and without
+    relying on permissive missing-property behaviour under Set-StrictMode.
+
     NOT IN THIS TRANCHE
     No new runtime-state collection is added. The module still reads the
     configured state rather than probing the effective listener state.
 
 .NOTES
     Author:  b3nn3tt@hbcomputersecurity.co.uk
-    Version: 2.1.0
+    Version: 2.1.1
 #>
+
+function Get-VKWinRMRegistryValue {
+    <#
+    .SYNOPSIS
+        Reads one named value from a registry property object, safely.
+
+    .DESCRIPTION
+        Returns $null in both of the cases that mean "this value is not
+        configured":
+
+          - the property object itself is $null, which is how a present but
+            VALUE-EMPTY key reaches this function, because Get-ItemProperty
+            emits no object for a key that holds no values;
+          - the object exists but carries no property of that name.
+
+        Windows PowerShell 5.1 compatible, and deliberately does NOT rely on
+        permissive missing-property access: under Set-StrictMode -Version 2
+        a direct $object.Missing reference raises PropertyNotFoundException.
+        The PSObject property table is consulted explicitly instead, which
+        is defined behaviour under every strict mode.
+
+        This function reports absence only. It never supplies a default and
+        never converts a value; the caller decides what an absent value
+        means and records the provenance.
+
+    .PARAMETER PropertyObject
+        The object returned by Get-ItemProperty, or $null.
+
+    .PARAMETER Name
+        The registry value name to read.
+
+    .OUTPUTS
+        The stored value, or $null when it is not present.
+    #>
+    param(
+        $PropertyObject,
+
+        [Parameter(Mandatory)][string]$Name
+    )
+
+    if ($null -eq $PropertyObject) { return $null }
+
+    $property = $PropertyObject.PSObject.Properties[$Name]
+
+    if ($null -eq $property) { return $null }
+
+    return $property.Value
+}
+
 
 function Invoke-VKSecurityWinRM {
     param(
@@ -161,17 +235,22 @@ function Invoke-VKSecurityWinRM {
             throw [System.InvalidOperationException]::new("The WSMAN Service key is not present.")
         }
 
+        # A THROWN read or access error is handled by the catch below and
+        # fails the unit closed. A key that exists and is read SUCCESSFULLY
+        # but holds no values makes Get-ItemProperty emit no object, so
+        # $serverSettings is $null with nothing having failed. That is a
+        # present, value-empty key: the documented Windows defaults apply,
+        # every field below is marked default_inferred, and the unit
+        # completes successfully.
         $serverSettings = Get-ItemProperty -Path $serverRegPath -ErrorAction Stop
-
-        if ($null -eq $serverSettings) {
-            throw [System.InvalidOperationException]::new("Reading the WSMAN Service key returned no properties.")
-        }
 
         $serverSources = [ordered]@{}
 
         # AllowUnencrypted: documented default is disabled.
-        if ($null -ne $serverSettings.AllowUnencrypted) {
-            $winrmData["allow_unencrypted"]      = ([int]$serverSettings.AllowUnencrypted -eq 1)
+        $rawAllowUnencrypted = Get-VKWinRMRegistryValue -PropertyObject $serverSettings -Name "AllowUnencrypted"
+
+        if ($null -ne $rawAllowUnencrypted) {
+            $winrmData["allow_unencrypted"]      = ([int]$rawAllowUnencrypted -eq 1)
             $serverSources["allow_unencrypted"]  = "explicit"
         }
         else {
@@ -190,7 +269,7 @@ function Invoke-VKSecurityWinRM {
         $serverAuth = [ordered]@{}
 
         foreach ($field in $serverAuthFields) {
-            $raw = $serverSettings.($field.Name)
+            $raw = Get-VKWinRMRegistryValue -PropertyObject $serverSettings -Name $field.Name
 
             if ($null -ne $raw) {
                 $serverAuth[$field.Path]                     = ([int]$raw -eq 1)
@@ -234,11 +313,10 @@ function Invoke-VKSecurityWinRM {
             throw [System.InvalidOperationException]::new("The WSMAN Client key is not present.")
         }
 
+        # As for the server key above: a thrown error fails the unit closed,
+        # while a successfully read, value-empty key yields $null here and
+        # licenses the documented client defaults as default_inferred.
         $clientSettings = Get-ItemProperty -Path $clientRegPath -ErrorAction Stop
-
-        if ($null -eq $clientSettings) {
-            throw [System.InvalidOperationException]::new("Reading the WSMAN Client key returned no properties.")
-        }
 
         $clientSources = [ordered]@{}
 
@@ -252,7 +330,7 @@ function Invoke-VKSecurityWinRM {
         $clientAuth = [ordered]@{}
 
         foreach ($field in $clientAuthFields) {
-            $raw = $clientSettings.($field.Name)
+            $raw = Get-VKWinRMRegistryValue -PropertyObject $clientSettings -Name $field.Name
 
             if ($null -ne $raw) {
                 $clientAuth[$field.Path]                     = ([int]$raw -eq 1)
@@ -264,8 +342,10 @@ function Invoke-VKSecurityWinRM {
             }
         }
 
-        if ($null -ne $clientSettings.AllowUnencrypted) {
-            $winrmData["client_allow_unencrypted"]     = ([int]$clientSettings.AllowUnencrypted -eq 1)
+        $rawClientAllowUnencrypted = Get-VKWinRMRegistryValue -PropertyObject $clientSettings -Name "AllowUnencrypted"
+
+        if ($null -ne $rawClientAllowUnencrypted) {
+            $winrmData["client_allow_unencrypted"]     = ([int]$rawClientAllowUnencrypted -eq 1)
             $clientSources["client_allow_unencrypted"] = "explicit"
         }
         else {
@@ -304,15 +384,18 @@ function Invoke-VKSecurityWinRM {
             throw [System.InvalidOperationException]::new("The WSMAN Client key is not present.")
         }
 
+        # A thrown error fails the unit closed. A successfully read,
+        # value-empty Client key yields $null here - the key is present and
+        # simply holds no values - which is handled identically to a key
+        # that holds other values but no TrustedHosts.
         $clientKey = Get-ItemProperty -Path $clientRegPath -ErrorAction Stop
 
-        if ($null -eq $clientKey) {
-            throw [System.InvalidOperationException]::new("Reading the WSMAN Client key returned no properties.")
-        }
-
         # An absent TrustedHosts value is a genuine observation: no trusted
-        # hosts are configured. $null is the correct representation.
-        $winrmData["trusted_hosts"] = if ($clientKey.TrustedHosts) { $clientKey.TrustedHosts } else { $null }
+        # hosts are configured. $null is the correct representation and the
+        # unit completes SUCCESSFULLY. No configured value is manufactured.
+        $rawTrustedHosts = Get-VKWinRMRegistryValue -PropertyObject $clientKey -Name "TrustedHosts"
+
+        $winrmData["trusted_hosts"] = if ($rawTrustedHosts) { $rawTrustedHosts } else { $null }
 
         Complete-VKAcquisition -UnitId $trustedUnit
     }

@@ -4,7 +4,9 @@ A PowerShell-based Windows evidence collector that produces versioned JSON outpu
 
 **Current state:** integration-pilot candidate.
 
-**Versions:** agent 2.1.0; schema 1.1; JSON depth 10.
+**Versions:** agent 2.1.1; schema 1.1; JSON depth 10.
+
+Agent 2.1.1 is a bug-fix release with **no evidence-contract change** — three live-provider edge cases where a successful zero result was read as malformed or absent. See the [changelog](CHANGELOG.md). The last **executed** verification is **617 passed / 0 failed / 0 skipped / 0 not run**, recorded against agent **2.1.0**; the 2.1.1 repair and its 29 new regression tests (static suite total **646**) are **authored but unexecuted**.
 
 ## Design principles
 
@@ -116,7 +118,7 @@ Used for packaging and single-file execution.
 
 ```powershell
 Set-Location ".\collectors\voight-kampff\dist"
-.\VoightKampff_Standalone_v2.1.0.ps1
+.\VoightKampff_Standalone_v2.1.1.ps1
 ```
 
 ### Building the standalone
@@ -156,10 +158,13 @@ Windows feature-state collection remains conditional on the frozen contextual re
 | --- | --- |
 | Runtime | Windows PowerShell 5.1 |
 | Test framework | Pester 6.1.0 |
-| Test result | 617 passed, 0 failed, 0 skipped, 0 not run |
-| Coverage | 18 modules, 46 acquisition units |
+| Last executed result | 617 passed, 0 failed, 0 skipped, 0 not run — **agent 2.1.0 baseline** |
+| Agent 2.1.1 suite | **646 tests authored, not yet executed** — no 2.1.1 result is claimed |
+| Coverage | 18 study-relevant modules, 46 acquisition units (unchanged at 2.1.1) |
 
 A green suite establishes that the implemented contract behaves as specified. It does not, by itself, make the collector ready for final controlled evidence collection — the tests verify contract behaviour against mocked providers, not live provider behaviour on target hosts.
+
+The 617/617 figure is the last result actually executed, and it was executed against agent 2.1.0. The 2.1.1 repair adds 29 regression tests; those tests are written but have not been run, so the suite total of 646 is an authored count, not a pass count.
 
 ## Running the tests
 
