@@ -5,7 +5,8 @@
 **Schema version:** 1.1 (`$script:VKSchemaVersion`; five-section envelope) — **unchanged**
 **JSON depth:** 10 (raised from 5 — see §2.3) — **unchanged**
 **Audit date:** 18 August 2026 (Tranche 1 audit). Implementation records: §8 (2A), §9 (2B.1), §10 (2B.2), §11 (2C), §12 (2.1.1 live-provider repair).
-**Last executed verification:** Windows PowerShell 5.1.26100.9168, Pester 6.1.0 — **617 passed, 0 failed, 0 skipped, 0 not run** (§11.10), executed against agent **2.1.0**. The agent 2.1.1 repair and its 29 new regression tests (static suite total **646**) are **authored but unexecuted** (§12); no 2.1.1 test result is claimed.
+**Latest executed verification:** Windows PowerShell **Desktop 5.1.26100.9168**, Pester **6.1.0**, caller-imposed StrictMode **Off** — **646 total, 646 passed, 0 failed, 0 skipped, 0 inconclusive, 0 not run**, suite result **`Passed`**, duration **`00:00:18.5527668`**, executed against agent **2.1.1** (§12.3). The agent 2.1.0 record of 617 passed / 0 failed / 0 skipped / 0 not run (§11.10) is preserved as the **2.1.0 baseline** and is no longer the latest executed result.
+**Live integration validation:** agent 2.1.1 ran on `CAPSTONE-WIN-01` on 2026-08-28 — 45 modules executed, 46 acquisition units, **46 `success` / 0 `failed` / 0 `restricted` / 0 `unavailable`** (§12.4). **Integration validation only — not rehearsal, not pilot, not controlled campaign evidence.**
 **Scope:** the Voight-Kampff PowerShell agent only. Backend, compliance engine, frontend, contextual scoring and Priority Index calculation are out of scope and unmodified. The approved C1–C7 meanings, contextual rules, weights, applicability and inference boundaries are unchanged.
 
 > ### ⚠ Not pilot-ready
@@ -512,7 +513,7 @@ Controlled collection runs under Windows PowerShell 5.1.
 
 *Current consequence:* the agent must remain 5.1-compatible. No PowerShell 7-only syntax, operators or cmdlets may be introduced by the remaining extension, and depth behaviour must be re-verified on 5.1 whenever nesting changes — 5.1 truncates silently.
 
-The configured JSON depth is now **10**, and the latest verification on this runtime is **617 passed / 0 failed / 0 skipped / 0 not run** under Pester 6.1.0 (§11.10). The depth-5 measurement and its rationale are retained in §2.3 as the Tranche 1 historical record; they no longer describe the current configuration.
+The configured JSON depth is now **10**, and the latest verification on this runtime is **646 passed / 0 failed / 0 skipped / 0 inconclusive / 0 not run** under Pester 6.1.0 at agent 2.1.1 (§12.3), superseding the 617-test agent 2.1.0 baseline in §11.10, which is preserved as history. The depth-5 measurement and its rationale are retained in §2.3 as the Tranche 1 historical record; they no longer describe the current configuration.
 
 ### 7.2 Final collection artefact — **generated dependency-free standalone script**
 
@@ -977,9 +978,10 @@ Session and recent-profile telemetry is **no longer a blocker** — it is implem
 
 Active-firewall-profile collection remains an enhancement, not a prerequisite. Per-user software hives and Event 4624 remain excluded.
 
-### 11.10 Verification record — Tranche 2C (CURRENT AUTHORITATIVE)
+### 11.10 Verification record — Tranche 2C (AGENT 2.1.0 BASELINE — superseded as current by §12.3)
 
-Executed on the controlled-collection runtime, **18 August 2026**:
+Executed on the controlled-collection runtime, **18 August 2026**. It was the current authoritative
+record when written; §12.3 now holds that position. This section is preserved unchanged as history.
 
 | Item | Value |
 | --- | --- |
@@ -995,7 +997,9 @@ This supersedes the Tranche 1 record in §2.3, which remains as the historical s
 
 **This does not make the agent pilot-ready.** A green suite establishes that the implemented contract behaves as specified; it does not discharge the remaining blockers in §11.9, and no output from this build may be used as controlled research evidence.
 
-**This record is preserved as the last EXECUTED verification, and it was executed against agent 2.1.0.** It is not superseded by §12, which is authored but unexecuted.
+**This record is preserved as the agent 2.1.0 BASELINE.** It was the last executed verification at the time §12 was first authored. It is **superseded as the latest executed result** by §12.3 (646/646 at agent 2.1.1) and is retained unchanged as history.
+
+**The 2.1.0 development-validation run is likewise preserved.** Agent 2.1.0, schema 1.1, 45 modules, 46 acquisition units, **41 `success`, 5 `unavailable`, 0 `failed`, 0 `restricted`**. Those five `unavailable` outcomes are what prompted the 2.1.1 repair (§12.1). They were **withheld evidence, not fabricated evidence**, and neither the run nor its capture is to be deleted or rewritten.
 
 ---
 
@@ -1025,15 +1029,99 @@ Neither hive nor the WSMAN key produced a single read error, so in no case was a
 
 No analytical or compliance judgement was added, no target-specific exception was introduced, and no host name appears anywhere in the repair.
 
-### 12.3 Verification status — AUTHORED, NOT EXECUTED
+### 12.3 Verification record — EXECUTED (CURRENT AUTHORITATIVE)
 
 | Item | Value |
 | --- | --- |
 | Agent / schema / depth | **2.1.1 / 1.1 / 10** |
-| Coverage | **18 study-relevant modules, 46 acquisition units** — unchanged |
+| Coverage | **18 study-relevant instrumented modules, 46 acquisition units** — unchanged |
 | Execution contract | **45 modules, 46 acquisition units** — unchanged |
 | Regression tests added | **29** (Host.Software 6; Security.WinRM 12; Security.DefenderAdvanced 10; standalone parity 1) |
-| Static suite total | **646 authored** |
-| Executed result | **None. No 2.1.1 test result is claimed.** The last executed verification remains §11.10's 617 passed / 0 failed / 0 skipped / 0 not run, recorded against agent **2.1.0**. |
+| Runtime | **Windows PowerShell Desktop 5.1.26100.9168** |
+| Test framework | **Pester 6.1.0** |
+| Caller-imposed StrictMode | **Off** |
+| Total | **646** |
+| Passed | **646** |
+| Failed / Skipped / Inconclusive / Not run | **0 / 0 / 0 / 0** |
+| Suite result | **`Passed`** |
+| Definitive committed-source duration | **`00:00:18.5527668`** |
 
-The remaining blockers in §11.9 are unchanged, and no output from this build may be used as controlled research evidence.
+This supersedes §11.10 **as the latest executed verification**. §11.10 is preserved unchanged as the agent 2.1.0 baseline.
+
+**Chronological note.** §12 was first authored while the 2.1.1 tests were written but unrun, and it said so accurately at that time. This subsection records the subsequent execution; it does not imply that 2.1.1 had already been tested when the earlier text was written.
+
+**On the earlier 21-failure result.** An earlier validation attempt reported 21 failures. That was **validation-harness contamination caused by caller-imposed `StrictMode` — not 21 production defects.** The clean rerun against the committed source, with caller-imposed StrictMode `Off`, passed all 646 tests. The 21-failure figure is not a defect count.
+
+### 12.4 Build and live integration validation — `CAPSTONE-WIN-01`, 2026-08-28
+
+**Source provenance.** Branch `fix/voight-live-provider-edge-cases`, commit `afa421ead68d94a678d96766424c6ead9f689933`, repository clean. The branch is **published but unmerged**; **no pull request exists**; the version is **not tagged and not frozen**.
+
+**Definitive build.**
+
+| Field | Value |
+| --- | --- |
+| Standalone | `VoightKampff_Standalone_v2.1.1.ps1` |
+| Size | 458,575 bytes |
+| SHA-256 | `165745478f86a05426798bb5d29fd5884e09d522eca0967d9d4c28640b40d208` |
+| Embedded build time | `2026-08-28 15:31:53` — **no timezone or offset encoded** |
+| Build manifest | `build-validation.manifest.json`, 2,781 bytes, SHA-256 `500a7436c49ca5cf4d46e0e77c11f4f34cc5a9c169078f812afd17e17e5ef175` |
+| Checksum file | `SHA256SUMS.txt`, 204 bytes, SHA-256 `fa4c4e6e37e0e349ed7f917abe670f25f56300b84967424632c78fcca53e53a3` |
+| Collector executed during the build | **No** — parsed only |
+
+The target-side copy at `C:\CSCK700\tools\voight-kampff\VoightKampff_Standalone_v2.1.1.ps1` matched that identity — 458,575 bytes, the same SHA-256 — and parsed successfully.
+
+**Build reproducibility limitation — a pre-freeze engineering issue, not an invalid build.** `Build-Standalone.ps1` inserts the current local wall-clock value into the generated comment header via `Built: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')`. **Two correct builds from identical source can therefore have identical size but different SHA-256 values.** The disposable parity build was 458,575 bytes / `1547e0797d70169ca5c3b411641613181028456d806aa95f0aedc52da21f6a0c`; the definitive build was 458,575 bytes / `165745478f86a05426798bb5d29fd5884e09d522eca0967d9d4c28640b40d208`. **The disposable build was deleted before a byte comparison, so the timestamp is not claimed to have been proven the sole differing content** — it explains the expected non-determinism and nothing more. No repair has been invented. The definitive artefact remains controlled through its recorded source commit, size, SHA-256, manifest and checksum file.
+
+**Run.**
+
+| Field | Value |
+| --- | --- |
+| Target | `CAPSTONE-WIN-01` |
+| Running account | `CAPSTONE-WIN-01\capadmin` |
+| Elevation | `True` |
+| Runtime | Windows PowerShell Desktop 5.1.26100.9168 |
+| Started (UTC) | `2026-08-28T14:38:51.5675112Z` |
+| Ended (UTC) | `2026-08-28T14:39:16.0983117Z` |
+| Duration | 24.53 seconds |
+| Process exit code | `0` |
+
+The collector was launched through a child Windows PowerShell process using **process-only** `ExecutionPolicy Bypass`; persistent execution-policy state was unchanged before and after the run.
+
+**Observed output contract.** Hostname `CAPSTONE-WIN-01`; agent `2.1.1`; schema `1.1`; `ran_as_admin` `True`; **45 modules executed, 45 unique**; **46 acquisition units**; **46 `success`, 0 `failed`, 0 `restricted`, 0 `unavailable`**.
+
+**The five repaired units were each present exactly once and each returned `success`:**
+
+| # | Acquisition unit | 2.1.0 outcome | 2.1.1 outcome |
+| ---: | --- | --- | --- |
+| 1 | `host.software.hklm_native` | `unavailable` | **`success`** |
+| 2 | `host.software.hklm_wow6432` | `unavailable` | **`success`** |
+| 3 | `security.winrm.client_registry` | `unavailable` | **`success`** |
+| 4 | `security.winrm.trusted_hosts` | `unavailable` | **`success`** |
+| 5 | `security.defender_advanced.asr_rules` | `unavailable` | **`success`** |
+
+**This is live confirmation that the specific 2.1.1 repair behaves correctly on `CAPSTONE-WIN-01`. It remains an integration-validation run — not a rehearsal, not a pilot, and not controlled campaign evidence.** The raw evidence JSON and the packaged capture contain sensitive host telemetry, are held only in the operational workspace outside every repository, and are never committed, quoted or reproduced.
+
+### 12.5 Windows Update error-log limitation
+
+One line was written to the collector's operational error log during the run — a `Host.WindowsUpdates` pending-update search failure, `Exception from HRESULT: 0x80240438`.
+
+- The target is **deliberately isolated** with no default route, gateway, DNS or external connectivity, and the failure is **consistent with that isolation**.
+- `Host.WindowsUpdates` is **outside the current 46 acquisition-governed units**, so the error **does not appear as a non-success acquisition outcome**.
+- **No claim may be made that there were zero pending updates**, and **no substantive interpretation may be assigned to an empty pending-update collection after this error.**
+- This is a **provenance-extension / pre-freeze issue**: a collection path that can fail without any acquisition unit recording it.
+- The **error-log timestamp is timezone-unqualified local wall-clock text**, whereas the evidence JSON and the manifests use UTC. **No timezone is assigned to a value that was not encoded.**
+
+### 12.6 Latent patterns deliberately outside this repair
+
+Similar readable-but-value-empty property-object patterns remain **statically visible** in `Security.RDP`, `Security.SMB` and `Security.UAC`. Those units **succeeded on this target, and no live defect was observed in them here.** They are recorded as **pre-freeze hardening candidates**, not as part of the 2.1.1 repair, and this repair is deliberately not widened to cover them. The Defender ASR normalisation is likewise **intentionally limited to the exact matched null/null sentinel observed live**.
+
+### 12.7 Status boundary
+
+The 2.1.1 repair is **implemented, tested, built, transferred, live-run, validated, preserved, committed and pushed on its feature branch**. It is:
+
+- **not merged**;
+- carried by **no pull request**;
+- **not tagged and not frozen**;
+- **not pilot-ready and not campaign-ready**.
+
+The remaining blockers in §11.9 are unchanged. **GATE B1 remains open.** No output from this build may be used as controlled research evidence, and this run advances no analytical artefact implementation.

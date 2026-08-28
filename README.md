@@ -10,10 +10,12 @@ The versions currently held here are **integration-pilot candidates**. Their uni
 
 | Collector | Pilot-candidate version | Current verification | Project role |
 | --- | --- | --- | --- |
-| [Voight-Kampff](collectors/voight-kampff/) | Agent 2.1.1; schema 1.1; JSON depth 10 | 18 modules, 46 acquisition units; last executed **617/617** Pester tests at agent 2.1.0; the 2.1.1 suite (**646** tests) is authored but not yet executed | Collects versioned Windows endpoint evidence and explicit acquisition outcomes. |
+| [Voight-Kampff](collectors/voight-kampff/) | Agent 2.1.1; schema 1.1; JSON depth 10 | 18 study-relevant modules, 46 acquisition units; **646/646** Pester tests passed at agent 2.1.1 (Pester 6.1.0, Windows PowerShell Desktop 5.1.26100.9168). Live integration-validation run on `CAPSTONE-WIN-01`: 45 modules executed, 46/46 units `success` | Collects versioned Windows endpoint evidence and explicit acquisition outcomes. |
 | [VulnSight](collectors/vulnsight/) | 0.3.1; Nessus export manifest 1.1 | 781/781 pytest tests | Acquires an explicitly selected native `.nessus` export and writes its acquisition manifest and SHA-256. |
 
 These results establish behaviour against the collectors' test contracts. They do not, by themselves, establish that a real campaign is complete, that every provider works on every target, or that collected evidence is eligible for the final experiment.
+
+**Voight-Kampff 2.1.1 branch state.** The 2.1.1 live-provider edge-case repair is published on the feature branch `fix/voight-live-provider-edge-cases` at commit `afa421ead68d94a678d96766424c6ead9f689933` (*fix(voight): handle empty Windows provider values*), exactly one commit ahead of `origin/main` and zero behind, with the repository clean when pushed. **The branch is published but unmerged, no pull request exists, and 2.1.1 is not tagged or frozen.** Its live run on `CAPSTONE-WIN-01` is an **integration-validation** run — not a rehearsal, not a pilot, and not controlled campaign evidence.
 
 ## Repository layout
 
