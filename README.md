@@ -15,7 +15,7 @@ The versions currently held here are **integration-pilot candidates**. Their uni
 
 These results establish behaviour against the collectors' test contracts. They do not, by themselves, establish that a real campaign is complete, that every provider works on every target, or that collected evidence is eligible for the final experiment.
 
-**Voight-Kampff 2.1.1 branch state.** The 2.1.1 live-provider edge-case repair is published on the feature branch `fix/voight-live-provider-edge-cases` at commit `afa421ead68d94a678d96766424c6ead9f689933` (*fix(voight): handle empty Windows provider values*), exactly one commit ahead of `origin/main` and zero behind, with the repository clean when pushed. **The branch is published but unmerged, no pull request exists, and 2.1.1 is not tagged or frozen.** Its live run on `CAPSTONE-WIN-01` is an **integration-validation** run — not a rehearsal, not a pilot, and not controlled campaign evidence.
+**Voight-Kampff 2.1.1 merge state.** The 2.1.1 live-provider edge-case repair is **merged into `main`** through **pull request #1**, at merge commit `a928acd942cae2dd071f416700eaaa9e6a4f421a`. Its history is preserved: repair commit `afa421ead68d94a678d96766424c6ead9f689933` (*fix(voight): handle empty Windows provider values*) and documentation commit `6830dce3feecc595eb9fbf351593ca9871b1552f` are ancestors of the merge and are **not interchangeable** with it as provenance identities. **2.1.1 remains untagged, unfrozen and not campaign-ready.** Its live runs on `CAPSTONE-WIN-01` are **integration-validation** runs — not the coordinated campaign rehearsal `REHEARSAL-WIN-01`, not `PILOT-WIN-01`, and not controlled campaign evidence.
 
 ## Repository layout
 

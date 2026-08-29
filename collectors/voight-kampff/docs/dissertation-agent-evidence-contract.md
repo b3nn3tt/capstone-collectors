@@ -1054,7 +1054,7 @@ This supersedes §11.10 **as the latest executed verification**. §11.10 is pres
 
 ### 12.4 Build and live integration validation — `CAPSTONE-WIN-01`, 2026-08-28
 
-**Source provenance.** Branch `fix/voight-live-provider-edge-cases`, commit `afa421ead68d94a678d96766424c6ead9f689933`, repository clean. The branch is **published but unmerged**; **no pull request exists**; the version is **not tagged and not frozen**.
+**Source provenance.** Developed on branch `fix/voight-live-provider-edge-cases` at repair commit `afa421ead68d94a678d96766424c6ead9f689933`, with documentation commit `6830dce3feecc595eb9fbf351593ca9871b1552f`; both are preserved ancestors of the **pull request #1** merge commit `a928acd942cae2dd071f416700eaaa9e6a4f421a` on `main`, and **are not interchangeable with it**. Repository clean. **Merged; the version is not tagged and not frozen.**
 
 **Definitive build.**
 
@@ -1117,11 +1117,15 @@ Similar readable-but-value-empty property-object patterns remain **statically vi
 
 ### 12.7 Status boundary
 
-The 2.1.1 repair is **implemented, tested, built, transferred, live-run, validated, preserved, committed and pushed on its feature branch**. It is:
+The 2.1.1 repair is **implemented, tested, built, transferred, live-run, validated, preserved, committed, pushed and merged into `main`** through **pull request #1**, at merge commit
+`a928acd942cae2dd071f416700eaaa9e6a4f421a`. It is:
 
-- **not merged**;
-- carried by **no pull request**;
 - **not tagged and not frozen**;
 - **not pilot-ready and not campaign-ready**.
+
+The **Voight-Kampff acquisition procedure rehearsal** has since completed successfully end to end
+against `CAPSTONE-WIN-01`. That is a rehearsal **of the acquisition procedure only**: the coordinated
+campaign `REHEARSAL-WIN-01` has **not** run, `PILOT-WIN-01` has **not** run, and **no controlled
+campaign evidence exists**.
 
 The remaining blockers in §11.9 are unchanged. **GATE B1 remains open.** No output from this build may be used as controlled research evidence, and this run advances no analytical artefact implementation.
