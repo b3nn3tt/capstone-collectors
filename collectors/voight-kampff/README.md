@@ -10,7 +10,7 @@ Agent 2.1.1 is a PATCH bug-fix release with **no evidence-contract change** — 
 
 **Tested, built and live-validated.** The 2.1.1 suite is **646 total / 646 passed / 0 failed / 0 skipped / 0 inconclusive / 0 not run**, suite result `Passed`, under Pester 6.1.0 on Windows PowerShell Desktop 5.1.26100.9168. The agent 2.1.0 result of 617/617 is preserved as the 2.1.0 baseline and is no longer the latest executed result. The 2.1.1 standalone ran on `CAPSTONE-WIN-01` and returned **46/46 acquisition units `success`**, with all five repaired units succeeding.
 
-**Branch state.** Published on `fix/voight-live-provider-edge-cases` at commit `afa421ead68d94a678d96766424c6ead9f689933`, one commit ahead of `origin/main` and zero behind, repository clean when pushed. **Unmerged; no pull request exists; not tagged; not frozen; not pilot-ready or campaign-ready.**
+**Merge state.** **Merged into `main` through pull request #1**, at merge commit `a928acd942cae2dd071f416700eaaa9e6a4f421a`, repository clean. Repair commit `afa421ead68d94a678d96766424c6ead9f689933` and documentation commit `6830dce3feecc595eb9fbf351593ca9871b1552f` are preserved ancestors and are **not interchangeable** with the merge commit. **Not tagged; not frozen; not pilot-ready or campaign-ready.**
 
 ## Design principles
 

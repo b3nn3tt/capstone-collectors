@@ -16,7 +16,7 @@ All notable changes to the collector and its evidence contract.
 
 A PATCH increment: three bug fixes with **no evidence-contract change**. No field path is added, removed or changed in meaning, no acquisition unit is added or removed, and no analytical or compliance judgement is introduced.
 
-> **Tested, built, transferred, live-run and preserved — not merged, not tagged, not frozen.**
+> **Tested, built, transferred, live-run, preserved and merged — not tagged, not frozen, not campaign-ready.**
 >
 > **Executed test result:** Windows PowerShell **Desktop 5.1.26100.9168**, Pester **6.1.0**, caller-imposed StrictMode **Off** — **646 total, 646 passed, 0 failed, 0 skipped, 0 inconclusive, 0 not run**, suite result **`Passed`**, definitive committed-source duration **`00:00:18.5527668`**.
 >
@@ -24,7 +24,7 @@ A PATCH increment: three bug fixes with **no evidence-contract change**. No fiel
 >
 > **The earlier 21-failure result was validation-harness contamination caused by caller-imposed `StrictMode`, not 21 production defects.** The clean rerun passed all 646 tests. That figure is not a defect count.
 >
-> Published on branch `fix/voight-live-provider-edge-cases` at commit `afa421ead68d94a678d96766424c6ead9f689933` — one commit ahead of `origin/main`, zero behind, repository clean when pushed. **Unmerged. No pull request exists. Not tagged, not frozen, not pilot-ready, not campaign-ready.**
+> **Merged into `main` through pull request #1**, at merge commit `a928acd942cae2dd071f416700eaaa9e6a4f421a`, repository clean. Developed on branch `fix/voight-live-provider-edge-cases`; repair commit `afa421ead68d94a678d96766424c6ead9f689933` and documentation commit `6830dce3feecc595eb9fbf351593ca9871b1552f` are preserved ancestors of the merge and are **not interchangeable** with it. **Not tagged, not frozen, not pilot-ready, not campaign-ready.**
 
 ### Context
 
@@ -108,7 +108,7 @@ The five repaired units — `host.software.hklm_native`, `host.software.hklm_wow
 
 **Windows Update error-log limitation.** One line was written to the collector's operational error log during the run: a `Host.WindowsUpdates` pending-update search failure, `Exception from HRESULT: 0x80240438`. The target is deliberately isolated with no default route, gateway, DNS or external connectivity, and the failure is consistent with that isolation. `Host.WindowsUpdates` is **outside the current 46 acquisition-governed units**, so the error does **not** surface as a non-success acquisition outcome. Consequently: **no claim may be made that there were zero pending updates, and no substantive interpretation may be assigned to an empty pending-update collection after this error.** This is a provenance-extension / pre-freeze issue. The error-log timestamp is **timezone-unqualified local wall-clock text**, whereas the evidence JSON and the manifests use UTC; no timezone is assigned to it here.
 
-**Still not pilot-ready, not merged, not tagged, not frozen.** The blockers recorded against 2.1.0 below are unchanged, and no output from this build may be used as controlled research evidence.
+**Merged into `main` through pull request #1 (`a928acd942cae2dd071f416700eaaa9e6a4f421a`); still not pilot-ready, not tagged, not frozen.** The blockers recorded against 2.1.0 below are unchanged, and no output from this build may be used as controlled research evidence.
 
 ### Latent patterns deliberately left outside this repair
 
