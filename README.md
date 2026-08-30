@@ -6,7 +6,11 @@ Both collectors pre-date the capstone. The versions preserved here have been mod
 
 ## Repository status
 
-The versions currently held here are **integration-pilot candidates**. Their unit and contract tests pass, and they are suitable for the `PILOT-WIN-01` integration exercise. They are not frozen or eligible for final controlled evidence collection until they have completed the integration pilot and the resulting collection bundle has been versioned and checksummed.
+The versions currently held here are **integration-validated acquisition components**. Their unit and contract tests pass and both have been exercised against a real target in non-campaign integration validation. **They are not frozen** and are not eligible for controlled evidence collection.
+
+**They are not yet suitable for `PILOT-WIN-01`.** Voight-Kampff `2.1.1` is **merged, untagged and unfrozen**, and is **not formal-pilot-ready** because the **registry-restricted feature-state extension is absent** — it remains blocked on the WS-E feature-identifier slice. VulnSight `0.3.1` is **unfrozen**. Freezing and pilot eligibility follow a successful formal pilot and a versioned, checksummed collection bundle.
+
+> **The development integration rehearsal `REHEARSAL-WIN-01` and the formal integration pilot `PILOT-WIN-01` are different exercises and are never used interchangeably.** A rehearsal is disposable, closes no gate and produces no evidence; the pilot is the formal exercise whose `PASS` is a `GATE B1` prerequisite. Neither has run.
 
 | Collector | Pilot-candidate version | Current verification | Project role |
 | --- | --- | --- | --- |

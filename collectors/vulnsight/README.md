@@ -511,8 +511,11 @@ python -m pytest -v
 ```
 
 The suite is entirely offline. It uses mocks and synthetic values, contacts no
-real Nessus instance and contains no real credentials. At version 0.3.1 it is
-573 tests, all passing.
+real Nessus instance and contains no real credentials. At version 0.3.1 the
+recorded current result is **781 passed, 0 failed**.
+
+*(The changelog's historical `573`-test entry records an earlier version and is
+accurate for that version; it is preserved unchanged.)*
 
 Passing tests establish that VulnSight behaves as specified against controlled
 doubles. They do **not** establish that the provider behaves as assumed, and

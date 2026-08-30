@@ -39,4 +39,6 @@ Capstone-relevant work includes:
 
 ## Freeze status
 
-Both versions are pilot candidates. Passing unit and contract tests is necessary but not sufficient for controlled-evidence eligibility. The single-host pilot must confirm real provider behaviour, cross-source identity, temporal alignment, immutable preservation, and downstream reconstructability before final collection versions are frozen.
+Both versions are **integration-validated acquisition components and neither is frozen**. VulnSight `0.3.1` is **unfrozen**; Voight-Kampff `2.1.1` is **merged, untagged and unfrozen**, and is **not formal-pilot-ready** while the **registry-restricted feature-state extension remains absent**. Passing unit and contract tests, and passing non-campaign integration validation, are necessary but not sufficient for controlled-evidence eligibility.
+
+The **formal** single-host pilot `PILOT-WIN-01` — distinct from the disposable development rehearsal `REHEARSAL-WIN-01`, and neither has run — must confirm real provider behaviour, cross-source identity, temporal alignment, immutable preservation, and downstream reconstructability before final collection versions are frozen.
