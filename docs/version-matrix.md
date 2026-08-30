@@ -15,7 +15,7 @@ This file records the exact collector versions imported into this repository and
 | Module/unit summary | 45 modules executed; 18 study-relevant instrumented modules; 46 acquisition units | Native `.nessus` acquisition and manifest workflow |
 | Source branch / commit for the current version | `main` @ `a928acd942cae2dd071f416700eaaa9e6a4f421a`, repository clean — **merged through pull request #1**; repair commit `afa421ead68d94a678d96766424c6ead9f689933` and documentation commit `6830dce3feecc595eb9fbf351593ca9871b1552f` are preserved ancestors. **Merged but not tagged and not frozen** | `main` @ `795ed1ed3df4c888e70dfa85bef01a5835caae71` |
 | Live integration-validation run | `CAPSTONE-WIN-01`, 2026-08-28 — 45 modules executed, 46 acquisition units, **46 success / 0 failed / 0 restricted / 0 unavailable**. Integration validation only; **not** rehearsal, pilot or controlled campaign evidence | Non-campaign export validation, 2026-08-27 (scans `10`/`12` and `15`/`16`) |
-| Current state | Integration-pilot candidate | Integration-pilot candidate |
+| Current state | **Integration-validated acquisition component. Merged, untagged, unfrozen.** **Not formal-pilot-ready** — the registry-restricted feature-state extension is absent (blocked on the WS-E feature-identifier slice) | **Integration-validated acquisition component. Unfrozen.** |
 | Final freeze tag | NOT YET FROZEN | NOT YET FROZEN |
 | Final artefact checksum | NOT YET FROZEN | NOT YET FROZEN |
 
@@ -47,4 +47,4 @@ Recorded here because the freeze fields above are still empty and this is the id
 - Record the source commit before copying.
 - Run each collector's documented tests after import.
 - Record any difference between the source commit and imported tree.
-- Do not mark a version frozen until the single-host pilot has passed and the collection bundle has been checksummed.
+- Do not mark a version frozen until the **formal** single-host pilot `PILOT-WIN-01` has passed and the collection bundle has been checksummed. **The disposable development rehearsal `REHEARSAL-WIN-01` is a different exercise and can never substitute for it.** Neither has run, and the freeze fields above remain deliberately empty.
