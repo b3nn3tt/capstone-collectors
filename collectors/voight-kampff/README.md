@@ -2,7 +2,7 @@
 
 A PowerShell-based Windows evidence collector that produces versioned JSON output with explicit acquisition provenance. The agent runs locally on a host, executes modular checks, and records structured endpoint observations that a separate artefact can ingest.
 
-**Current state:** integration-pilot candidate.
+**Current state:** integration-validated acquisition component; not tagged, frozen, formally pilot-ready or campaign-ready.
 
 **Versions:** agent 2.1.1; schema 1.1; JSON depth 10.
 
