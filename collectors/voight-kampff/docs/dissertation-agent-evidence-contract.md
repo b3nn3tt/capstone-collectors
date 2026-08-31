@@ -22,6 +22,22 @@
 >
 > Active-firewall-profile collection remains a possible enhancement, **not** a frozen prerequisite. Per-user software hives remain explicitly excluded (§7.5). Event 4624 is deliberately excluded, not deferred (§11.3).
 
+## How to read this cumulative contract
+
+This document is both an audit trail and the current evidence-contract record; it is **not one
+undated snapshot**.
+
+- **§§1–6 preserve the Tranche 1 audit of agent 2.0 / schema 1.0.** Present-tense descriptions of
+  missing acquisition metadata, failure ambiguity and proposed changes in those sections describe
+  that historical baseline unless explicitly stated otherwise.
+- **§7 records the decisions made from that audit.** Action notes that were subsequently completed
+  are now labelled as historical and point to their implementation records.
+- **§§8–11 are chronological implementation records** for agent 2.1.0. Their status tables describe
+  the named tranche, not the repository's final state.
+- **§12 and the banner above are the current authoritative position:** agent 2.1.1, schema 1.1,
+  18 modules, 46 acquisition units, and 646/646 tests passed. The acquisition envelope is
+  implemented; the remaining campaign blocker is the registry-restricted feature-state extension.
+
 ## Note on document location
 
 No `docs/` directory previously existed, and no alternative established documentation location was found — the repository contained only a root `README.md`, with `dist/` and `tests/` present but empty. This document therefore creates `docs/` as the documentation location, matching the path named in the governing task. The root `README.md` remains the operational agent guide; this document is the evidence-contract reference for the dissertation artefact.
@@ -38,7 +54,7 @@ Voight-Kampff is an **upstream evidence collector**. Its raw JSON is preserved a
 - reconciliation against Nessus and CIS-CAT;
 - contextual scoring and Priority Index calculation.
 
-This document records what the agent **currently** contributes to conditions C1–C7, what it demonstrably **cannot** establish, and where collection failure is currently **indistinguishable** from a true negative. It then proposes — but does not implement — a per-module acquisition envelope to remove that ambiguity.
+Sections 1–6 record what the Tranche 1 agent contributed to conditions C1–C7, what it could not establish, and where schema-1.0 collection failure was indistinguishable from a true negative. Section 5 records the design proposal that was subsequently accepted in §7 and implemented across §§8–12.
 
 ### 1.1 Two interpretive rules that constrain every mapping below
 
@@ -53,7 +69,7 @@ A listening socket observed on the host establishes only that a process is bound
 
 This is the governing principle for every absence claim in the study, and it operates in two stages.
 
-**Stage one — acquisition.** `success` is a *necessary* precondition. Because the current agent cannot signal per-module acquisition outcome (§4), an empty array, a `null`, or a missing key may equally mean *nothing was there*, *the query failed*, *permission was denied*, or *the provider was unavailable*. Until the acquisition envelope in §5 is implemented, **no empty agent result may be read as confirmed absence** in any analytical dataset.
+**Stage one — acquisition.** `success` is a *necessary* precondition. At the Tranche 1/schema-1.0 baseline, the agent could not signal per-unit acquisition outcome (§4), so an empty array, a `null`, or a missing key could mean *nothing was there*, *the query failed*, *permission was denied*, or *the provider was unavailable*. That restriction still governs **legacy schema-1.0 evidence** (§5.5.2). Current schema-1.1 evidence carries the implemented per-unit outcome (§§8–12); only `success` can make an empty result assessable, and Stage two still controls whether absence may actually be asserted.
 
 **Stage two — condition-specific qualification.** `success` is *not sufficient*. Even a confirmed successful empty collection only opens the question. Confirmed absence additionally requires that the condition's own rules permit the inference on four axes:
 
@@ -66,7 +82,7 @@ Where any axis fails, the contextual evidence state remains **unknown or neutral
 
 ---
 
-## 2. Envelope, serialisation and execution mechanics as found
+## 2. Tranche 1 envelope, serialisation and execution mechanics as found (historical)
 
 ### 2.1 Runner and module mechanism
 
@@ -134,12 +150,17 @@ The warning below is retained as the standing rationale, and the depth setting m
 
 ## 3. Condition evidence audit (C1–C7)
 
+> **Historical audit convention.** The semantic boundaries in the **Establishes** and **Cannot
+> establish** rows remain applicable unless a later section explicitly extends them. The **Failure
+> ambiguity**, **Availability** and **Required change** rows record the Tranche 1/schema-1.0 baseline;
+> their implementation status is superseded by §§8–12.
+
 Column definitions:
 
 - **Establishes** — what the field directly supports as an observation.
 - **Cannot establish** — inferences the field does not license.
 - **Availability** — `available` (field reliably present and meaningful), `partial` (present but incomplete or elevation-dependent), `absent` (not collected).
-- **Failure ambiguity** — how collection failure currently presents, and what it is confusable with.
+- **Failure ambiguity** — how collection failure presented in the Tranche 1/schema-1.0 baseline, and what it was confusable with.
 - **PII** — whether the field carries personal or identifying information.
 
 Failure-mode codes used in the tables, defined fully in §4.2: **A** = empty collection on failure; **B** = key absent on failure; **C** = failure coerced to a definite value; **D** = failure indistinguishable from "not present"; **E** = module reported as executed regardless of outcome.
@@ -200,7 +221,7 @@ Failure-mode codes used in the tables, defined fully in §4.2: **A** = empty col
 | Required change | (i) Acquisition outcome per module (§5). (ii) **`Security.HostSecurity` must emit `null`, not `false`, for Device Guard services and properties when `$DeviceGuardState` is null.** (iii) `Security.DefenderAdvanced` must distinguish `unavailable` (Defender not the active AV — a legitimate, informative outcome) from `failed`/`restricted` (probe error), rather than returning silently in both cases. |
 | Nessus / CIS-CAT | **CIS-CAT mappings remain external.** The agent supplies directly observed state only; benchmark identifiers, expected values and pass/fail determinations are CIS-CAT's contribution and are not reproduced in the agent. |
 
-### C5 — Interactive use
+### C5 — Interactive use (Tranche 1 baseline; extended in §11)
 
 | Item | Detail |
 | --- | --- |
@@ -210,9 +231,9 @@ Failure-mode codes used in the tables, defined fully in §4.2: **A** = empty col
 | Cannot establish | **Whether the host is actually interactively used, by whom, or how recently.** `platform_role` is a hardware chassis declaration, not a usage observation — a physically-desktop chassis running as an unattended server reports `Desktop`. `user_accounts[].last_logon` covers **local accounts only** (`Get-LocalUser`); on a domain-joined host, the accounts that actually log in interactively are domain accounts and are **entirely invisible**. Session type (console vs RDP vs service) is not collected. `processes[].session_id` is present but is not aggregated into any session-level evidence. |
 | Availability | **absent** for direct interactive-use evidence; **partial** for role inference only |
 | Failure ambiguity | **B.** `host.os` sub-keys are simply not written if the CIM query fails; `domain_status` likewise. Because `$Data["os"]` is pre-created as an empty `[ordered]@{}` before the `try`, a failure leaves `"os": {}` — an empty object that is not obviously a failure. |
-| PII | `domain_name` and `hostname` are organisationally identifying. The planned session and recent-profile telemetry will introduce **direct personal identifiers** and is the primary pseudonymisation concern (§6). |
-| Required change | **Roadmap item 7** — narrowly scoped, domain-aware session and recent-profile telemetry. Not implemented in this tranche. C5 is the weakest-evidenced condition in the current agent and the extension is a prerequisite for using it. |
-| Nessus / CIS-CAT | Neither supplies interactive-use evidence. C5 depends on this agent's planned extension; it has no external corroboration source. |
+| PII | `domain_name` and `hostname` are organisationally identifying. The session and recent-profile telemetry later implemented in Tranche 2C introduces **direct personal identifiers** and is the primary pseudonymisation concern (§6, §11.7). |
+| Required change | **Historical Roadmap item 7** — narrowly scoped, domain-aware session and recent-profile telemetry. This was not implemented in Tranche 1 and was then completed in Tranche 2C (§11). |
+| Nessus / CIS-CAT | Neither supplies interactive-use evidence. C5 therefore depends on this agent's implemented Tranche 2C extension and has no external corroboration source. |
 
 ### C6 — Low-privilege pathway
 
@@ -224,7 +245,7 @@ Failure-mode codes used in the tables, defined fully in §4.2: **A** = empty col
 | Cannot establish | **Privileges held by any principal other than the account that ran the agent.** `whoami /priv` reports the *current token only* ([Vul.Privileges.Token.ps1:53](../modules/vulnerability/Vul.Privileges.Token.ps1#L53)). If the agent runs elevated, `dangerous_enabled_count` describes the administrator's token and says nothing about a low-privileged attacker's starting position — reading it as a low-privilege pathway would **invert the finding**. This makes `scan_metadata.ran_as_admin` a mandatory qualifier for any C6 use of this field. `Get-LocalGroupMember` also cannot resolve members of groups containing orphaned or unresolvable domain SIDs, and on domain-joined hosts the nested domain group memberships that confer local admin are not expanded. |
 | Availability | **partial** — local account and entry-point evidence available; per-principal privilege evidence absent; domain-nested admin paths absent |
 | Failure ambiguity | **A, B, C, E.** `host.user_accounts` and `host.group_memberships` are assigned outside their `try` blocks, so a failure yields `[]` (**A**). Within `group_memberships`, a per-group member failure inserts the **literal string `"Error retrieving members"` into the `members[]` array** ([Host.Users.ps1:89](../modules/host/Host.Users.ps1#L89)) — an in-band error sentinel that will be parsed downstream as a principal name unless explicitly filtered (**C**). `rdp.allowed_users` uses `-ErrorAction SilentlyContinue` and yields `[]` for both "group is empty" and "enumeration failed". `vulnerability.token_privileges` uses **B**. |
-| PII | **Yes — the highest concentration in the agent.** `user_accounts[].name`, `group_memberships[].members[]`, `rdp.allowed_users[]`, `token_privileges.user`, and `scan_metadata.running_user` / `running_user_sid` are all direct principal identifiers. The planned session evidence will add more. |
+| PII | **Yes — the highest concentration in the agent.** `user_accounts[].name`, `group_memberships[].members[]`, `rdp.allowed_users[]`, `token_privileges.user`, and `scan_metadata.running_user` / `running_user_sid` are all direct principal identifiers. The session evidence later implemented in Tranche 2C adds more (§11.7). |
 | Required change | (i) Acquisition outcome per module (§5). (ii) Remove the in-band `"Error retrieving members"` sentinel in favour of a structured per-group outcome. (iii) Session/pathway evidence via roadmap item 7. (iv) Pseudonymisation of all principals **in the ingestion layer**, before analytical datasets are produced (§6.4). |
 | Nessus / CIS-CAT | Nessus credentialed checks corroborate account and group state. CIS-CAT supplies benchmark expectations for user-rights assignment. Neither replaces the agent's token-privilege observation. |
 
@@ -242,7 +263,7 @@ Failure-mode codes used in the tables, defined fully in §4.2: **A** = empty col
 | Required change | (i) **`Security.Antivirus` must separate `unavailable`/`failed`/`restricted` from an affirmative "no AV product registered" result. Until it does, `product_name: "Not Detected"` must not be treated as evidence of protection degradation.** (ii) Acquisition outcome per module (§5). |
 | Nessus / CIS-CAT | Nessus credentialed AV plugins provide an independent detection path that does not rely on `SecurityCenter2`, and are the appropriate cross-check for the ambiguity above. |
 
-### 3.1 Summary
+### 3.1 Tranche 1 summary (historical)
 
 | Condition | Availability | Dominant failure modes | Blocking gap |
 | --- | --- | --- | --- |
@@ -254,15 +275,15 @@ Failure-mode codes used in the tables, defined fully in §4.2: **A** = empty col
 | C6 Low-privilege pathway | partial | A, B, C, E | Token privileges describe the collector, not an attacker; in-band error sentinel |
 | C7 Protection degradation | available / partial | **D**, B, E | `"Not Detected"` conflates failure with absence |
 
-**Three defects fabricate evidence rather than merely losing it, and are the priority for the acquisition-status tranche:** the `Security.LegacyProtocols` `$true` defaults (C3), the `Security.HostSecurity` Device Guard `false` values (C4), and the `Security.Antivirus` `"Not Detected"` conflation (C7).
+**Three defects fabricated evidence rather than merely losing it and became the priority for the acquisition-status tranche:** the `Security.LegacyProtocols` `$true` defaults (C3), the `Security.HostSecurity` Device Guard `false` values (C4), and the `Security.Antivirus` `"Not Detected"` conflation (C7). All three were corrected in Tranche 2A (§8.4a).
 
 ---
 
-## 4. Current error-handling limitations
+## 4. Tranche 1 error-handling limitations (historical schema-1.0 baseline)
 
-### 4.1 The runner cannot detect module failure
+### 4.1 The Tranche 1 runner could not detect module failure
 
-This is structural, and confirms the concern raised in the governing task.
+This was structural in the audited schema-1.0 baseline and confirmed the concern raised in the governing task. The fail-closed schema-1.1 implementation that resolved it is recorded in §§8–12.
 
 1. **Every module catches its own errors internally.** No study-relevant module rethrows. Failures are written to a side-channel log via `Write-LogMessage` and execution continues.
 2. **The runner wraps no module invocation in `try`/`catch`.** There is no error handling anywhere in [Invoke-VKScan.ps1](../core/Invoke-VKScan.ps1).
@@ -271,7 +292,7 @@ This is structural, and confirms the concern raised in the governing task.
 5. **The error log is out-of-band and non-durable.** `Write-LogMessage` appends to `outputs/error.log`, which is **deleted at the start of every scan** ([Invoke-VKScan.ps1:83-85](../core/Invoke-VKScan.ps1#L83-L85)) and is never incorporated into the JSON. The preserved raw evidence therefore contains **no record of what failed**. For a dissertation artefact where raw JSON is the source evidence, this is disqualifying for any absence-based claim.
 6. **A terminating error would abort the whole scan.** Because nothing is guarded at the runner level, an unhandled terminating error in any module ends the run before `ConvertTo-Json` executes and **no output file is produced at all**.
 
-Consequence: **acquisition outcome cannot currently be inferred from the JSON by any means.** Rule 2 applies without exception until §5 is implemented.
+Historical consequence: **acquisition outcome could not be inferred from schema-1.0 JSON by any means.** Rule 2 therefore applies without exception to legacy schema-1.0 evidence. Schema 1.1 implements the acquisition metadata designed in §5 (§§8–12).
 
 ### 4.2 Failure-mode taxonomy
 
@@ -287,7 +308,7 @@ Consequence: **acquisition outcome cannot currently be inferred from the JSON by
 
 ---
 
-## 5. Proposed acquisition contract (proposal only — not implemented)
+## 5. Tranche 1 proposed acquisition contract (subsequently implemented)
 
 ### 5.1 Outcome vocabulary
 
@@ -338,7 +359,7 @@ The agent asserts nothing beyond the acquisition outcome itself. It does not det
 }
 ```
 
-And the same module on a successful, genuinely-empty collection — the case the current agent cannot express:
+And the same module on a successful, genuinely-empty collection — the case the Tranche 1/schema-1.0 agent could not express and schema 1.1 now can:
 
 ```json
 {
@@ -418,9 +439,9 @@ Evidence already collected under schema 1.0 carries no acquisition metadata by c
 - **Empty or missing results cannot support confirmed absence.** Under schema 1.0 there is no way to distinguish a successful zero-result collection from failure, restriction or unavailability (§4.1), so the first stage of Rule 2 can never be satisfied. Every empty or missing schema-1.0 value is therefore **unknown**, never absent.
 - The three evidence-fabricating behaviours (§3.1) mean that some schema-1.0 *positive-looking* values are also unreliable — specifically `legacy_protocols.llmnr_enabled`/`mdns_enabled` when `$true`, `host_security.security_services[]` when `false`, and `antivirus.product_name` when `"Not Detected"`. These must be excluded from legacy inspection regardless of the rule above.
 
-### 5.6 Implementation note for the later tranche
+### 5.6 Historical implementation note and final disposition
 
-Because modules currently swallow their own errors (§4.1), a runner-level wrapper alone **cannot** determine outcome — it would record `success` for every module regardless. The refactor must therefore change how modules signal failure, not merely how the runner records it. The minimal viable approach is a shared helper in `VK.Utilities.ps1` that modules call to register an outcome for a named collection unit, defaulting to `success` and being downgraded from within existing `catch` blocks. This keeps the module diffs small and localised to the `catch` sites already identified in §4.2. Determining `restricted` versus `failed` requires exception-type and message inspection; `Security.WinRM` already contains a rudimentary version of this pattern ([Security.WinRM.ps1:82](../modules/security/Security.WinRM.ps1#L82)) that can be generalised.
+The Tranche 1 analysis correctly concluded that a runner-level wrapper alone could not determine outcome while modules swallowed their own errors (§4.1). The implemented refactor therefore changed how collection units signal completion and failure rather than merely wrapping invocation. The final design is stricter than the initial sketch: a shared helper in `VK.Utilities.ps1` registers each unit as **pending**, `success` requires an explicit completion call, and the pre-serialisation sweep converts any unfinished or invalid state to `failed / incomplete_collection` (§8.2–§8.3). Classification of `restricted`, `failed` and `unavailable` is implemented centrally and refined at the migrated provider sites (§§8–12).
 
 ---
 
@@ -452,11 +473,11 @@ Recommendations:
 
 I further recommend adopting an explicit versioning policy statement in `VK.Config.ps1` before the freeze (roadmap item 13), since "increment versions when the evidence contract changes" (item 12) cannot be enforced or tested against an unstated scheme.
 
-### 6.3 Divergence that must be resolved before the freeze
+### 6.3 Historical standalone divergence — resolved in Tranche 2A
 
-The standalone build template emits a **different `scan_metadata` block** from the modular runner. Compare [Build-Standalone.ps1:378-386](../build/Build-Standalone.ps1#L378-L386) with [Invoke-VKScan.ps1:349-360](../core/Invoke-VKScan.ps1#L349-L360): the standalone build **omits `schema_version`, `running_user` and `running_user_sid`**.
+At the Tranche 1 baseline, the standalone build template emitted a **different `scan_metadata` block** from the modular runner: it omitted `schema_version`, `running_user` and `running_user_sid`.
 
-This means the two execution modes do not produce the same evidence contract. `schema_version` in particular is the field the ingestion layer would use to route and validate — its absence in standalone output is a material defect. It is **out of scope for this tranche** (correcting it is not part of the duplicate-execution fix and would be an unrelated change), but it must be resolved before controlled collection, and the decision of which artefact is used for collection should be made explicitly. The Pester suite added in this tranche asserts the required `scan_metadata` fields against a fixture rather than against the build template, so it does not currently catch this; a build-output conformance test is recommended for the tranche that fixes it.
+That divergence was a material evidence-contract defect because `schema_version` is required for downstream routing and validation. It was corrected in Tranche 2A: modular and generated-standalone metadata parity is now asserted against generated output, as recorded in §7.2 and §8.1. This subsection is retained as the provenance for that resolved prerequisite.
 
 ### 6.4 Pseudonymisation
 
@@ -527,24 +548,27 @@ The `acquisition` key is accepted as a fifth top-level section for schema 1.1. �
 
 *Consequence:* the four-section envelope is superseded for schema 1.1 by a five-section envelope. The key is additive for existing consumers but required by the schema-1.1 study contract (§5.5.1, §6.2) — a study-relevant collection unit without conforming acquisition metadata renders the artefact schema-invalid and subject to quarantine, and ingestion must not invent a `failed` outcome to fill the gap.
 
-**Test impact — action required in Tranche 2.** The schema-1.0 output-contract test currently asserts **exactly four** top-level sections:
+**Historical test impact — completed in Tranche 2A.** At the point of this decision, the schema-1.0 output-contract test asserted **exactly four** top-level sections:
 
 ```powershell
 # tests/VK.OutputContract.Tests.ps1 — 'Envelope: required top-level sections'
 $keys | Should -Be @('scan_metadata', 'host', 'security', 'vulnerability')
 ```
 
-This assertion is correct for schema 1.0 and **will fail once schema 1.1 introduces the required fifth `acquisition` section**. It must be updated during Tranche 2 to assert the five-section schema-1.1 envelope, ideally selecting the expected section list by `schema_version` so that both schema-1.0 legacy fixtures and schema-1.1 fixtures can be asserted in the same suite. The failure is expected and intended — it is the contract test doing its job — and must not be worked around by relaxing the assertion to a subset check, which would stop the test detecting a missing section.
+That assertion was correct for schema 1.0 and was deliberately replaced during Tranche 2A by exact five-section schema-1.1 assertions, including generated-standalone parity (§7.2, §8.1). The contract was not weakened to a subset check.
 
-### 7.4 The three evidence-fabricating behaviours — **must be corrected before pilot collection**
+### 7.4 The three evidence-fabricating behaviours — **corrected in Tranche 2A**
 
-The three behaviours identified in §3.1 must be corrected **before pilot collection**, ahead of the full acquisition-status refactor:
+The three behaviours identified in §3.1 were required to be corrected **before pilot collection**:
 
 1. `Security.LegacyProtocols` — `llmnr_enabled`/`mdns_enabled` set to `$true` in their `catch` blocks (C3);
 2. `Security.HostSecurity` — Device Guard `security_services[]`/`security_properties[]` emitted as `false` when the CIM query failed (C4);
 3. `Security.Antivirus` — `product_name: "Not Detected"` returned when the `SecurityCenter2` query failed or was denied (C7).
 
 *Rationale:* these are the only defects that cause the agent to assert observations it did not make. Every other failure mode loses information; these three manufacture it. Pilot data collected before they are fixed would be contaminated in a way that cannot be detected or repaired after the fact, because the fabricated values are indistinguishable from genuine ones in the artefact. Each is a small, localised change at a known `catch` site (§4.2), and each is a behaviour change requiring change control and a version increment.
+
+*Disposition:* all three were corrected with fail-closed acquisition handling in Tranche 2A
+(§8.4a). They remain listed here to preserve the decision rationale, not as current defects.
 
 ### 7.5 Per-user software-hive expansion — **excluded**
 
@@ -558,9 +582,9 @@ General expansion of `Host.Software` to per-user registry hives (`HKCU`, `HKU\<S
 
 ## 8. Tranche 2A implementation record
 
-Implemented against the decisions in §7. This section records **what exists in the code now**, as distinct from the §5 proposal.
+Implemented against the decisions in §7. This section records **what Tranche 2A introduced**, as distinct from the §5 proposal; later tranches extend it and §12 is current.
 
-### 8.1 Status
+### 8.1 Status at completion of Tranche 2A (historical snapshot)
 
 | Item | State |
 | --- | --- |
