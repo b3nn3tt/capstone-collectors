@@ -74,6 +74,19 @@ function Invoke-VKHostWindowsUpdates {
     #  Windows Update Session (COM Object)
     # --------------------------------------------------------
 
+    $pendingUnitId = "host.windows_updates.pending_updates"
+    $pendingProvider = 'Microsoft.Update.Session.CreateUpdateSearcher().Search("IsInstalled=0")'
+
+    # A failed query is unknown, never a successful empty result.
+    $updateData["pending_count"] = $null
+    $updateData["pending_updates"] = $null
+
+    Start-VKAcquisition -UnitId $pendingUnitId -Provider $pendingProvider `
+        -DataPaths @(
+            "host.windows_updates.pending_count"
+            "host.windows_updates.pending_updates"
+        )
+
     $updateSession = $null
 
     try {
@@ -81,6 +94,9 @@ function Invoke-VKHostWindowsUpdates {
     }
     catch {
         Write-LogMessage -Section "Host.WindowsUpdates" -Message "Unable to create Windows Update session: $($_.Exception.Message)" -Level "ERROR"
+        Set-VKAcquisitionFailure -UnitId $pendingUnitId -ErrorRecord $_ `
+            -Provider $pendingProvider -Outcome "failed" `
+            -Category "provider_query_failed"
         $Data["windows_updates"] = $updateData
         Write-VKStatus -Message "Windows Update enumeration failed - COM object unavailable." -Type "ERROR"
         return
@@ -154,11 +170,15 @@ function Invoke-VKHostWindowsUpdates {
 
         $updateData["pending_count"] = $pendingUpdates.Count
         $updateData["pending_updates"] = $pendingUpdates
+        Complete-VKAcquisition -UnitId $pendingUnitId
     }
     catch {
         Write-LogMessage -Section "Host.WindowsUpdates" -Message "Error searching for pending updates: $($_.Exception.Message)" -Level "ERROR"
         $updateData["pending_count"] = $null
-        $updateData["pending_updates"] = @()
+        $updateData["pending_updates"] = $null
+        Set-VKAcquisitionFailure -UnitId $pendingUnitId -ErrorRecord $_ `
+            -Provider $pendingProvider -Outcome "failed" `
+            -Category "provider_query_failed"
     }
 
 

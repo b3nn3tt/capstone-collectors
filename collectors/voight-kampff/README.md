@@ -2,15 +2,15 @@
 
 A PowerShell-based Windows evidence collector that produces versioned JSON output with explicit acquisition provenance. The agent runs locally on a host, executes modular checks, and records structured endpoint observations that a separate artefact can ingest.
 
-**Current state:** integration-validated acquisition component; not tagged, frozen, formally pilot-ready or campaign-ready.
+**Current state:** agent 2.2.0 is mock-tested and targeted live-provider validated; not yet committed, tagged, frozen, formally pilot-ready or campaign-ready.
 
-**Versions:** agent 2.1.1; schema 1.1; JSON depth 10.
+**Versions:** agent 2.2.0; schema 1.1; JSON depth 10.
 
-Agent 2.1.1 is a PATCH bug-fix release with **no evidence-contract change** — three live-provider edge cases where a successful zero result was read as malformed or absent. See the [changelog](CHANGELOG.md).
+Agent 2.2.0 is a MINOR, backwards-compatible acquisition uplift. It adds one governed Windows Update acquisition unit so a successful zero result remains distinct from a failed provider query. Schema 1.1 and JSON depth 10 are unchanged. See the [changelog](CHANGELOG.md).
 
-**Tested, built and live-validated.** The 2.1.1 suite is **646 total / 646 passed / 0 failed / 0 skipped / 0 inconclusive / 0 not run**, suite result `Passed`, under Pester 6.1.0 on Windows PowerShell Desktop 5.1.26100.9168. The agent 2.1.0 result of 617/617 is preserved as the 2.1.0 baseline and is no longer the latest executed result. The 2.1.1 standalone ran on `CAPSTONE-WIN-01` and returned **46/46 acquisition units `success`**, with all five repaired units succeeding.
+**Mock-tested and targeted live-provider validated.** The complete 2.2.0 suite passed **659/659** tests. A separate disposable live run reproduced HRESULT `0x8024402C` and correctly emitted one `failed` / `provider_query_failed` acquisition unit with both pending-update values `null`; the remaining 46 units succeeded.
 
-**Merge state.** **Merged into `main` through pull request #1**, at merge commit `a928acd942cae2dd071f416700eaaa9e6a4f421a`, repository clean. Repair commit `afa421ead68d94a678d96766424c6ead9f689933` and documentation commit `6830dce3feecc595eb9fbf351593ca9871b1552f` are preserved ancestors and are **not interchangeable** with the merge commit. **Not tagged; not frozen; not pilot-ready or campaign-ready.**
+**Development state.** Agent 2.2.0 is being prepared on branch `fix/voight-windows-update-acquisition`, based on `main` revision `a11e9cc0ea56c1b77622395c778584d00d8c854c`. Mocked and targeted live validation have passed. **Not yet tagged, frozen, pilot-ready or campaign-ready.**
 
 ## Design principles
 
@@ -122,7 +122,7 @@ Used for packaging and single-file execution.
 
 ```powershell
 Set-Location ".\collectors\voight-kampff\dist"
-.\VoightKampff_Standalone_v2.1.1.ps1
+.\VoightKampff_Standalone_v2.2.0.ps1
 ```
 
 ### Building the standalone
@@ -132,7 +132,7 @@ Set-Location ".\collectors\voight-kampff\build"
 .\Build-Standalone.ps1
 ```
 
-The build concatenates source files and produces a single-file script that depends only on Windows PowerShell 5.1 and built-in Windows providers.
+The build reads every source module as strict UTF-8, concatenates the verified text and produces a single-file script that depends only on Windows PowerShell 5.1 and built-in Windows providers.
 
 ## Elevation model
 
@@ -163,19 +163,20 @@ Windows feature-state collection remains conditional on the frozen contextual re
 | Runtime | Windows PowerShell **Desktop 5.1.26100.9168** |
 | Test framework | Pester **6.1.0** |
 | Caller-imposed StrictMode | **Off** |
-| Total | **646** |
-| Passed | **646** |
+| Total | **659** |
+| Passed | **659** |
 | Failed / Skipped / Inconclusive / Not run | **0 / 0 / 0 / 0** |
 | Suite result | **`Passed`** |
-| Definitive committed-source duration | `00:00:18.5527668` |
-| Coverage | 18 study-relevant modules, 46 acquisition units (unchanged at 2.1.1) |
+| Full-suite duration | `00:00:15.6003025` |
+| Coverage | 18 study-relevant modules, 47 acquisition units at agent 2.2.0 |
+| Agent 2.1.1 baseline (historical) | 646 passed, 0 failed, 0 skipped, 0 inconclusive, 0 not run |
 | Agent 2.1.0 baseline (historical) | 617 passed, 0 failed, 0 skipped, 0 not run |
 
 A green suite establishes that the implemented contract behaves as specified. It does not, by itself, make the collector ready for final controlled evidence collection — the tests verify contract behaviour against mocked providers, not live provider behaviour on target hosts.
 
 **On the earlier 21-failure result.** An earlier validation attempt reported 21 failures. That was **validation-harness contamination caused by caller-imposed `StrictMode`, not 21 production defects.** The clean rerun against the committed source, with caller-imposed StrictMode `Off`, passed all **646** tests. The 21-failure figure must not be cited as a defect count.
 
-**Live provider behaviour.** Separately from the mocked suite, the 2.1.1 standalone was run once on `CAPSTONE-WIN-01` and returned 45 modules executed and **46/46 acquisition units `success`**. That is an integration-validation run — **not** a rehearsal, a pilot, or controlled campaign evidence.
+**Live provider behaviour.** A non-campaign 2.2.0 run on `CAPSTONE-WIN-01` completed from `2026-09-04T08:34:01.0192409Z` to `2026-09-04T08:34:27.2928748Z`. It reproduced HRESULT `0x8024402C`; `host.windows_updates.pending_updates` reported `failed` / `provider_query_failed`, while `pending_count` and `pending_updates` were both `null`. The remaining 46 units succeeded. Evidence SHA-256: `d4347b5fd992ce9286c402b9bcc54a69cb9c574e2860a9b31014107c9ea93d57`. The VM was subsequently reverted to `POST-REHEARSAL__PRE-VK-2.2.0-TEST`.
 
 ## Running the tests
 

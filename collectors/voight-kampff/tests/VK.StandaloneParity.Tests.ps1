@@ -208,16 +208,27 @@ Describe 'Generated standalone script' {
             $script:GeneratedText | Should -Match '\$script:VKSchemaVersion\s*=\s*"1\.1"'
         }
 
-        It 'declares agent version 2.1.1' {
-            $script:GeneratedText | Should -Match '\$script:VKAgentVersion\s*=\s*"2\.1\.1"'
+        It 'declares agent version 2.2.0' {
+            $script:GeneratedText | Should -Match '\$script:VKAgentVersion\s*=\s*"2\.2\.0"'
         }
 
-        It 'is written to the 2.1.1 version-stamped filename' {
+        It 'is written to the 2.2.0 version-stamped filename' {
             # The build stamps the configured agent version into the output
             # file name, so a missed version bump would ship an artefact
             # whose name contradicts its own declared agent version.
             [System.IO.Path]::GetFileName($script:GeneratedPath) |
-                Should -Be 'VoightKampff_Standalone_v2.1.1.ps1'
+                Should -Be 'VoightKampff_Standalone_v2.2.0.ps1'
+        }
+
+        It 'preserves UTF-8 source text without mojibake' {
+            $boxDrawing = [string][char]0x2500
+            $expectedText = "$boxDrawing$boxDrawing Groups that indicate weak permissions"
+            $mojibake = -join @([char]0x00E2, [char]0x201D, [char]0x20AC)
+
+            $script:GeneratedText |
+                Should -Match ([regex]::Escape($expectedText))
+            $script:GeneratedText |
+                Should -Not -Match ([regex]::Escape($mojibake))
         }
 
         It 'declares JSON depth 10' {
@@ -317,6 +328,7 @@ Describe 'Generated standalone script' {
             'host.software.hklm_wow6432'
             'host.users.local_accounts'
             'host.users.group_memberships'
+            'host.windows_updates.pending_updates'
             'vulnerability.token_privileges.current_token'
             # Tranche 2C
             'host.sessions.current_sessions'
