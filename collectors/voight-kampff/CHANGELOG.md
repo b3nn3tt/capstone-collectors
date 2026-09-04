@@ -10,6 +10,31 @@ All notable changes to the collector and its evidence contract.
 
 ---
 
+## [2.2.0] - Windows Update acquisition semantics and build encoding
+
+**Schema 1.1 and JSON depth 10 remain unchanged. The agent now contains 45 modules and 47 acquisition units.**
+
+### Changed
+
+- Added `host.windows_updates.pending_updates`, governing `host.windows_updates.pending_count` and `host.windows_updates.pending_updates`.
+- Successful zero-result queries emit a numeric zero, an empty collection and outcome `success`.
+- Session-creation or search failures emit two `null` payload values and outcome `failed` with category `provider_query_failed`.
+- Hardened standalone generation to read source modules as strict UTF-8 and reject invalid input.
+- Increased the agent version from 2.1.1 to 2.2.0.
+
+### Verification
+
+- Complete mocked suite: **659/659 passed** under Windows PowerShell 5.1 and Pester 6.1.0.
+- Targeted live validation reproduced HRESULT `0x8024402C`.
+- The new unit correctly reported `failed` / `provider_query_failed`.
+- Both governed pending-update values were `null`.
+- The other 46 acquisition units reported `success`.
+- Evidence SHA-256: `d4347b5fd992ce9286c402b9bcc54a69cb9c574e2860a9b31014107c9ea93d57`.
+- The disposable VM state was reverted after validation.
+
+This resolves the technical condition recorded as rehearsal issue `ISS-005`. The closed rehearsal evidence and records remain unchanged.
+
+---
 ## [2.1.1] — live-provider edge-case repair
 
 **Schema version: 1.1 — unchanged. JSON depth: 10 — unchanged. 45 modules and 46 acquisition units — unchanged.**

@@ -158,7 +158,18 @@ function Read-ModuleFile {
         return $null
     }
 
-    return Get-Content -Path $FilePath -Raw
+    # Windows PowerShell 5.1 treats UTF-8 without a BOM as the active ANSI
+    # code page when Get-Content is allowed to choose the encoding. Read
+    # explicitly and fail closed so source text cannot be silently mojibaked
+    # in the generated standalone.
+    $strictUtf8 = New-Object System.Text.UTF8Encoding($false, $true)
+
+    try {
+        return [System.IO.File]::ReadAllText($FilePath, $strictUtf8)
+    }
+    catch {
+        throw "Module file is not valid UTF-8: $FilePath. $($_.Exception.Message)"
+    }
 }
 
 

@@ -2,17 +2,21 @@
 
 Pester suite covering the runner contract, the schema 1.1 output contract, the fail-closed acquisition helpers, every migrated module across **all current tranches through 2C**, and modular/standalone parity.
 
-**Authoritative execution result — agent 2.1.1:** Windows PowerShell **Desktop 5.1.26100.9168**, Pester **6.1.0**, caller-imposed StrictMode **Off** — **646 total, 646 passed, 0 failed, 0 skipped, 0 inconclusive, 0 not run**, suite result **`Passed`**, definitive committed-source duration **`00:00:18.5527668`**. Coverage spans **18 study-relevant modules and 46 acquisition units** at agent 2.1.1, schema 1.1, JSON depth 10.
+**Authoritative mocked execution result — agent 2.2.0:** Windows PowerShell **Desktop 5.1.26100.9168**, Pester **6.1.0**, StrictMode **Off** — **659 total, 659 passed, 0 failed, 0 skipped, 0 inconclusive, 0 not run**, suite result **`Passed`**, duration **`00:00:15.6003025`**. Coverage spans **18 study-relevant modules and 47 acquisition units** at schema 1.1 and JSON depth 10.
 
-**Agent 2.1.0 baseline (historical, preserved):** Windows PowerShell 5.1.26100.9168, Pester 6.1.0 — **617 passed, 0 failed, 0 skipped, 0 not run** at agent 2.1.0. This was the last executed result *at the time the 2.1.1 repair was authored*, and it is retained as the 2.1.0 baseline. It is **superseded as the latest executed result** by the 646/646 run above.
+**Agent 2.1.1 baseline (historical):** 646/646 passed.
+
+**Agent 2.1.0 baseline (historical):** 617/617 passed.
 
 **On the earlier 21-failure result.** An earlier validation attempt of the 2.1.1 suite reported 21 failures. That was **validation-harness contamination caused by caller-imposed `StrictMode` — not 21 production defects.** The clean rerun against the committed source, with caller-imposed StrictMode `Off`, **passed all 646 tests**. The 21-failure figure is not a defect count and must not be cited as one.
 
-The 29 new tests are: **6** for `Host.Software` value-empty uninstall subkeys (Tranche 2B.2 file), **12** for `Security.WinRM` present-but-value-empty WSMAN keys (Tranche 2B.1 file), **10** for the `Security.DefenderAdvanced` ASR no-rule sentinel and its malformed neighbours (Tranche 2B.1 file), and **1** parity assertion that the generated standalone is written to the `2.1.1` version-stamped filename.
+**Agent 2.2.0 adds 13 tests:** 10 focused Windows Update cases, one output-contract case and two standalone-parity/UTF-8 cases.
+
+**Agent 2.1.1 added 29 tests** covering Host.Software, Security.WinRM, Security.DefenderAdvanced and version-stamped standalone generation.
 
 A green suite establishes that the implemented contract behaves as specified. It does **not** make the collector pilot-ready; see the remaining blockers below.
 
-**This suite is mocked throughout, so it is not live-provider validation.** Live behaviour of the 2.1.1 repair was established separately by a single integration-validation run of the generated standalone on `CAPSTONE-WIN-01` (46/46 acquisition units `success`), recorded outside this repository in the operational workspace. That run is **not** a rehearsal, a pilot, or controlled campaign evidence, and no evidence file from it is held in this repository.
+**This suite is mocked throughout, so it is not itself live-provider validation.** A separate disposable live run reproduced the rehearsal failure and confirmed the new machine-readable failure semantics. Successful-query paths remain covered by mocks.
 
 **Pester is development assurance only.** It is never included in, and never required by, the generated collector. The standalone script depends only on Windows PowerShell 5.1 and built-in Windows providers — the parity suite asserts this explicitly.
 
@@ -31,6 +35,7 @@ tests/
 |-- VK.RunnerContract.Tests.ps1        Static AST analysis of runner and build template
 |-- VK.OutputContract.Tests.ps1        Schema 1.1 envelope, acquisition, versions, depth
 |-- VK.Acquisition.Tests.ps1           Fail-closed helper behaviour
+|-- VK.Modules.WindowsUpdates.Tests.ps1 Focused pending-update semantics
 |-- VK.Modules.Acquisition.Tests.ps1   The three Tranche 2A corrections (mocked providers)
 |-- VK.Modules.Tranche2B1.Tests.ps1    The seven Tranche 2B.1 modules (mocked providers)
 |-- VK.Modules.Tranche2B2.Tests.ps1    The seven Tranche 2B.2 modules (mocked providers)
@@ -104,10 +109,10 @@ Static AST analysis. `Host.NetworkConfig` invoked exactly once by the runner and
 
 | Area | Asserts |
 | --- | --- |
-| Central config | agent 2.1.1, schema 1.1, depth 10 |
+| Central config | agent 2.2.0, schema 1.1, depth 10 |
 | Envelope | **exactly five** sections, in order — an exact match, deliberately not a subset or containment check |
 | Metadata | all ten required fields, ISO 8601 UTC timestamps, no duplicate in `modules_executed` |
-| Acquisition | **exact schema-1.1 coverage of all 46 units, asserted in both directions** — every instrumented unit present, and no entry that is not an instrumented unit; all required fields; permitted four-value vocabulary; nothing pending or incomplete; `success` ⇒ `error` null; non-success ⇒ structured error; valid UTC timestamps; populated `data_paths`; no stack traces; no payload duplicated under `acquisition` |
+| Acquisition | **exact schema-1.1 coverage of all 47 units, asserted in both directions**, including `host.windows_updates.pending_updates`; permitted outcomes; exact governed paths; structured failure data |
 | Schema validity | all eight invalid fixtures identified as invalid; missing metadata reported, **never repaired into an invented outcome**; representative fixture accepted (positive control) |
 | Legacy 1.0 | recognised as legacy not invalid; four sections; **cannot support empty-result absence** on any path; contrast case showing schema 1.1 success makes absence assessable |
 | Depth 10 | deepest payload paths and acquisition `data_paths`/`error` survive; **negative controls** confirm shallow serialisation genuinely truncates |
@@ -126,9 +131,12 @@ All providers mocked.
 
 **On the native DMA source-contract tests.** The NTSTATUS is produced inside compiled C# invoked as a static method, so there is no PowerShell command for Pester to intercept and the return path cannot be mocked. Those tests therefore assert the *source contract* of the embedded C#, which is what a regression would actually consist of: they require a `result != 0` throw, forbid any `return 0;` and any `if (result == 0)` gate, confirm the observed byte is still returned on success, confirm the unmanaged buffer is still freed, and confirm no type outside mscorlib is used (which would need an extra `Add-Type` assembly reference on a target machine).
 
+### VK.Modules.WindowsUpdates.Tests.ps1
+
+All Windows Update providers are mocked. Ten focused tests distinguish a successful empty result from search and session-creation failures. Failure withholds both governed payload values and records a machine-readable `failed` / `provider_query_failed` outcome.
 ### VK.StandaloneParity.Tests.ps1
 
-Static parity of all ten metadata fields and all five envelope sections between runner and build source; both take `schema_version` and depth from central config; both initialise and finalise acquisition; the build captures the identity needed for `running_user_sid`. Then, against the **generated** script in `TestDrive`: parses without syntax errors; declares schema 1.1, agent 2.1.1, depth 10, and is written to the `VoightKampff_Standalone_v2.1.1.ps1` version-stamped filename; emits all metadata and sections; contains every acquisition helper it calls (AST cross-check of called versus defined); contains **all 46 current unit identifiers** across Tranches 2A, 2B.1, 2B.2 and 2C; no longer contains the corrected false-evidence pathways. Dependency-freedom: no Pester, no `Import-Module`, no `#Requires -Modules`, no gallery/HTTP/SQL/Python references, no test-only validator, no PowerShell 7-only syntax. Build-source checks confirm `-Quiet`/`-PassThru` exist and that the build never invokes its own output.
+Static parity of all ten metadata fields and all five envelope sections. The generated standalone parses successfully; declares schema 1.1, agent 2.2.0 and depth 10; contains all 47 acquisition units; preserves strict UTF-8 source text; remains self-contained; and is never executed by the test suite.
 
 **No test is silently skipped.** Generation runs in a `BeforeAll` during the run phase, never behind a `-Skip:` expression evaluated at discovery. If the build fails, that is surfaced as a **failing test** carrying the captured `GenerationError`, and the dependent tests fail on their own assertions rather than disappearing from the report. The authoritative run records **0 skipped and 0 not run**.
 
@@ -152,7 +160,7 @@ Highlights: Identification's guarded `BuildNumber` (never cast to `0`) and proof
 
 A final parameterised Describe denies every provider at once and asserts the shared contract across all twelve units — including that both instrumented summary counts remain null. `host.identification.hostname` is legitimately excluded from the "no successes" assertion because it reads an environment variable rather than a mocked provider.
 
-The output-contract suite additionally asserts **exact 46-unit coverage in both directions** and the exact governed `data_paths` for every unit, including the two software hives sharing one path and the three Tranche 2C session units. The standalone-parity suite asserts **all current unit identifiers** — every Tranche 2A, 2B.1, 2B.2 and 2C unit — against the generated artefact.
+The output-contract suite additionally asserts **exact 47-unit coverage in both directions** and exact governed `data_paths`, including `host.windows_updates.pending_updates`. Standalone parity verifies all current unit identifiers and strict UTF-8 generation.
 
 ### VK.Modules.Sessions.Tests.ps1
 

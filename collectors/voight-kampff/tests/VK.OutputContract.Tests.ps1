@@ -118,6 +118,7 @@ BeforeAll {
         'host.software.hklm_wow6432'
         'host.users.local_accounts'
         'host.users.group_memberships'
+        'host.windows_updates.pending_updates'
         'vulnerability.token_privileges.current_token'
     )
 
@@ -146,6 +147,7 @@ BeforeAll {
         'host.software.hklm_wow6432'          = @('host.installed_software')
         'host.users.local_accounts'           = @('host.base_sid', 'host.user_accounts')
         'host.users.group_memberships'        = @('host.group_memberships', 'host.user_accounts[].is_admin')
+        'host.windows_updates.pending_updates'= @('host.windows_updates.pending_count', 'host.windows_updates.pending_updates')
         'vulnerability.token_privileges.current_token' = @('vulnerability.token_privileges')
         'host.sessions.current_sessions'      = @('host.sessions.current_sessions', 'host.sessions.current_sessions_summary')
         'host.sessions.session_principals'    = @('host.sessions.session_principals', 'host.sessions.session_principals_summary')
@@ -158,8 +160,8 @@ BeforeAll {
 
 Describe 'Central configuration' {
 
-    It 'declares agent version 2.1.1' {
-        $script:ConfiguredAgent | Should -Be '2.1.1'
+    It 'declares agent version 2.2.0' {
+        $script:ConfiguredAgent | Should -Be '2.2.0'
     }
 
     It 'declares schema version 1.1' {
@@ -241,9 +243,9 @@ Describe 'Acquisition section (schema 1.1)' {
         $unexpected -join ', ' | Should -BeNullOrEmpty
     }
 
-    It 'emits exactly 46 acquisition entries' {
-        @($script:Reparsed.acquisition.PSObject.Properties.Name).Count | Should -Be 46
-        @($script:AllInstrumentedUnitIds).Count | Should -Be 46
+    It 'emits exactly 47 acquisition entries' {
+        @($script:Reparsed.acquisition.PSObject.Properties.Name).Count | Should -Be 47
+        @($script:AllInstrumentedUnitIds).Count | Should -Be 47
     }
 
     It 'governs the documented data paths for <_>' -ForEach @(
@@ -258,6 +260,7 @@ Describe 'Acquisition section (schema 1.1)' {
         'host.software.hklm_wow6432'
         'host.users.local_accounts'
         'host.users.group_memberships'
+        'host.windows_updates.pending_updates'
         'vulnerability.token_privileges.current_token'
         'host.sessions.current_sessions'
         'host.sessions.session_principals'

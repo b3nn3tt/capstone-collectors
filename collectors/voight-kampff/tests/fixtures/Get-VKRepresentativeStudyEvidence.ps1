@@ -47,7 +47,7 @@
 
     "scan_metadata" = [ordered]@{
         "schema_version"        = "1.1"
-        "agent_version"         = "2.1.1"
+        "agent_version"         = "2.2.0"
         "hostname"              = "FIXTURE-HOST-01"
         "running_user"          = "FIXTUREDOM\fixture.user"
         "running_user_sid"      = "S-1-5-21-1111111111-2222222222-3333333333-1001"
@@ -91,7 +91,7 @@
             "observation_start"   = "2026-08-18T09:15:01Z"
             "observation_end"     = "2026-08-18T09:15:01Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.legacy_protocols.llmnr_enabled"
@@ -104,7 +104,7 @@
             "observation_start"   = "2026-08-18T09:15:01Z"
             "observation_end"     = "2026-08-18T09:15:02Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.legacy_protocols.mdns_enabled"
@@ -117,7 +117,7 @@
             "observation_start"   = "2026-08-18T09:15:02Z"
             "observation_end"     = "2026-08-18T09:15:03Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.legacy_protocols.netbios_adapters"
@@ -130,7 +130,7 @@
             "observation_start"   = "2026-08-18T09:15:03Z"
             "observation_end"     = "2026-08-18T09:15:03Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.legacy_protocols.wpad_service_state"
@@ -144,7 +144,7 @@
             "observation_start"   = "2026-08-18T09:15:03Z"
             "observation_end"     = "2026-08-18T09:15:04Z"
             "acquisition_outcome" = "failed"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @("security.legacy_protocols.wpad_auto_detect")
             "error"               = [ordered]@{
@@ -159,7 +159,7 @@
             "observation_start"   = "2026-08-18T09:15:04Z"
             "observation_end"     = "2026-08-18T09:15:05Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @("security.legacy_protocols.tls_protocols")
             "error"               = $null
@@ -171,7 +171,7 @@
             "observation_start"   = "2026-08-18T09:15:05Z"
             "observation_end"     = "2026-08-18T09:15:05Z"
             "acquisition_outcome" = "restricted"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @("security.host_security.kernel_dma_protection")
             "error"               = [ordered]@{
@@ -186,7 +186,7 @@
             "observation_start"   = "2026-08-18T09:15:05Z"
             "observation_end"     = "2026-08-18T09:15:06Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @("security.host_security.dep_policy")
             "error"               = $null
@@ -196,7 +196,7 @@
             "observation_start"   = "2026-08-18T09:15:06Z"
             "observation_end"     = "2026-08-18T09:15:07Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.host_security.vbs_status"
@@ -211,7 +211,7 @@
             "observation_start"   = "2026-08-18T09:15:07Z"
             "observation_end"     = "2026-08-18T09:15:08Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.antivirus.product_name"
@@ -225,7 +225,7 @@
             "observation_start"   = "2026-08-18T09:15:08Z"
             "observation_end"     = "2026-08-18T09:15:09Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.antivirus.running_mode"
@@ -247,7 +247,7 @@
             "observation_start"   = "2026-08-18T09:15:09Z"
             "observation_end"     = "2026-08-18T09:15:10Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.defender_advanced.asr_rules"
@@ -261,7 +261,7 @@
             "observation_start"   = "2026-08-18T09:15:09Z"
             "observation_end"     = "2026-08-18T09:15:10Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.defender_advanced.network_protection"
@@ -277,7 +277,7 @@
             "observation_start"   = "2026-08-18T09:15:10Z"
             "observation_end"     = "2026-08-18T09:15:11Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @("security.defender_advanced.tamper_protection")
             "error"               = $null
@@ -288,7 +288,7 @@
             "observation_start"   = "2026-08-18T09:15:11Z"
             "observation_end"     = "2026-08-18T09:15:12Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @("security.firewall_profiles")
             "error"               = $null
@@ -298,7 +298,7 @@
             "observation_start"   = "2026-08-18T09:15:12Z"
             "observation_end"     = "2026-08-18T09:15:13Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @("security.firewall_rules")
             "error"               = $null
@@ -309,7 +309,7 @@
             "observation_start"   = "2026-08-18T09:15:13Z"
             "observation_end"     = "2026-08-18T09:15:14Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.smb.smbv1_enabled"
@@ -322,7 +322,7 @@
             "observation_start"   = "2026-08-18T09:15:14Z"
             "observation_end"     = "2026-08-18T09:15:15Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.smb.server_signing_required"
@@ -341,7 +341,7 @@
             "observation_start"   = "2026-08-18T09:15:15Z"
             "observation_end"     = "2026-08-18T09:15:16Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.smb.client_signing_required"
@@ -357,7 +357,7 @@
             "observation_start"   = "2026-08-18T09:15:16Z"
             "observation_end"     = "2026-08-18T09:15:16Z"
             "acquisition_outcome" = "restricted"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.smb.smb2_enabled"
@@ -378,7 +378,7 @@
             "observation_start"   = "2026-08-18T09:15:17Z"
             "observation_end"     = "2026-08-18T09:15:17Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.rdp.rdp_enabled"
@@ -391,7 +391,7 @@
             "observation_start"   = "2026-08-18T09:15:17Z"
             "observation_end"     = "2026-08-18T09:15:18Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.rdp.port"
@@ -410,7 +410,7 @@
             "observation_start"   = "2026-08-18T09:15:18Z"
             "observation_end"     = "2026-08-18T09:15:19Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @("security.rdp.allowed_users")
             "error"               = $null
@@ -421,7 +421,7 @@
             "observation_start"   = "2026-08-18T09:15:19Z"
             "observation_end"     = "2026-08-18T09:15:20Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.winrm.service_state"
@@ -435,7 +435,7 @@
             "observation_start"   = "2026-08-18T09:15:20Z"
             "observation_end"     = "2026-08-18T09:15:20Z"
             "acquisition_outcome" = "restricted"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.winrm.allow_unencrypted"
@@ -454,7 +454,7 @@
             "observation_start"   = "2026-08-18T09:15:20Z"
             "observation_end"     = "2026-08-18T09:15:21Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.winrm.client_auth"
@@ -468,7 +468,7 @@
             "observation_start"   = "2026-08-18T09:15:21Z"
             "observation_end"     = "2026-08-18T09:15:21Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @("security.winrm.trusted_hosts")
             "error"               = $null
@@ -478,7 +478,7 @@
             "observation_start"   = "2026-08-18T09:15:21Z"
             "observation_end"     = "2026-08-18T09:15:22Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @("security.winrm.listeners")
             "error"               = $null
@@ -489,7 +489,7 @@
             "observation_start"   = "2026-08-18T09:15:22Z"
             "observation_end"     = "2026-08-18T09:15:23Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "security.uac.uac_enabled"
@@ -513,7 +513,7 @@
             "observation_start"   = "2026-08-18T09:15:23Z"
             "observation_end"     = "2026-08-18T09:15:24Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @("security.fde_os_drive")
             "error"               = $null
@@ -524,7 +524,7 @@
             "observation_start"   = "2026-08-18T09:15:24Z"
             "observation_end"     = "2026-08-18T09:15:24Z"
             "acquisition_outcome" = "unavailable"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @("security.fde_additional_volumes")
             "error"               = [ordered]@{
@@ -544,7 +544,7 @@
             "observation_start"   = "2026-08-18T09:14:01Z"
             "observation_end"     = "2026-08-18T09:14:01Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @("host.hostname")
             "error"               = $null
@@ -554,7 +554,7 @@
             "observation_start"   = "2026-08-18T09:14:01Z"
             "observation_end"     = "2026-08-18T09:14:02Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "host.os.name"
@@ -569,7 +569,7 @@
             "observation_start"   = "2026-08-18T09:14:02Z"
             "observation_end"     = "2026-08-18T09:14:03Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "host.os.platform_role"
@@ -585,7 +585,7 @@
             "observation_start"   = "2026-08-18T09:14:05Z"
             "observation_end"     = "2026-08-18T09:14:06Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "host.network_config.tcp_connections"
@@ -598,7 +598,7 @@
             "observation_start"   = "2026-08-18T09:14:06Z"
             "observation_end"     = "2026-08-18T09:14:07Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "host.network_config.udp_listeners"
@@ -612,7 +612,7 @@
             "observation_start"   = "2026-08-18T09:14:08Z"
             "observation_end"     = "2026-08-18T09:14:10Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @("host.services")
             "error"               = $null
@@ -623,7 +623,7 @@
             "observation_start"   = "2026-08-18T09:14:10Z"
             "observation_end"     = "2026-08-18T09:14:12Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @("host.processes")
             "error"               = $null
@@ -636,7 +636,7 @@
             "observation_start"   = "2026-08-18T09:14:13Z"
             "observation_end"     = "2026-08-18T09:14:14Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @("host.installed_software")
             "error"               = $null
@@ -646,7 +646,7 @@
             "observation_start"   = "2026-08-18T09:14:14Z"
             "observation_end"     = "2026-08-18T09:14:15Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @("host.installed_software")
             "error"               = $null
@@ -657,7 +657,7 @@
             "observation_start"   = "2026-08-18T09:14:16Z"
             "observation_end"     = "2026-08-18T09:14:17Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "host.base_sid"
@@ -670,7 +670,7 @@
             "observation_start"   = "2026-08-18T09:14:17Z"
             "observation_end"     = "2026-08-18T09:14:18Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "host.group_memberships"
@@ -687,7 +687,7 @@
             "observation_start"   = "2026-08-18T09:14:19Z"
             "observation_end"     = "2026-08-18T09:14:19Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "host.sessions.current_sessions"
@@ -702,7 +702,7 @@
             "observation_start"   = "2026-08-18T09:14:19Z"
             "observation_end"     = "2026-08-18T09:14:20Z"
             "acquisition_outcome" = "restricted"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "host.sessions.session_principals"
@@ -720,7 +720,7 @@
             "observation_start"   = "2026-08-18T09:14:20Z"
             "observation_end"     = "2026-08-18T09:14:21Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @(
                 "host.sessions.observation_window"
@@ -730,12 +730,26 @@
             "error"               = $null
         }
 
+        # --- Host.WindowsUpdates pending-update provider ---
+        "host.windows_updates.pending_updates" = [ordered]@{
+            "observation_start"   = "2026-08-18T09:14:21Z"
+            "observation_end"     = "2026-08-18T09:14:22Z"
+            "acquisition_outcome" = "success"
+            "agent_version"       = "2.2.0"
+            "schema_version"      = "1.1"
+            "data_paths"          = @(
+                "host.windows_updates.pending_count"
+                "host.windows_updates.pending_updates"
+            )
+            "error"               = $null
+        }
+
         # --- Vul.Privileges.Token ---
         "vulnerability.token_privileges.current_token" = [ordered]@{
             "observation_start"   = "2026-08-18T09:15:59Z"
             "observation_end"     = "2026-08-18T09:16:00Z"
             "acquisition_outcome" = "success"
-            "agent_version"       = "2.1.1"
+            "agent_version"       = "2.2.0"
             "schema_version"      = "1.1"
             "data_paths"          = @("vulnerability.token_privileges")
             "error"               = $null
