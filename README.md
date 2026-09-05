@@ -8,18 +8,26 @@ Both collectors pre-date the capstone. The versions preserved here have been mod
 
 The versions currently held here are **integration-validated acquisition components**. Their unit and contract tests pass and both have been exercised against a real target in non-campaign integration validation. **They are not frozen** and are not eligible for controlled evidence collection.
 
-**They are not yet suitable for `PILOT-WIN-01`.** Voight-Kampff `2.1.1` is **merged, untagged and unfrozen**, and is **not formal-pilot-ready** because the **registry-restricted feature-state extension is absent** — it remains blocked on the WS-E feature-identifier slice. VulnSight `0.3.1` is **unfrozen**. Freezing and pilot eligibility follow a successful formal pilot and a versioned, checksummed collection bundle.
+**They are not yet suitable for `PILOT-WIN-01`.** As recorded on 2026-09-05, Voight-Kampff `2.3.0` sits on branch `feat/voight-2.3-evidence-expansion` and is **pending merge at the time of this record**; it was **untagged and unfrozen** when observed on that date. **Current branch, merge, tag and freeze status must be obtained from the repository, not from this file.** VulnSight `0.3.1` is **merged and unfrozen**. Freezing and pilot eligibility follow a successful formal pilot and a versioned, checksummed collection bundle.
 
-> **The development integration rehearsal `REHEARSAL-WIN-01` and the formal integration pilot `PILOT-WIN-01` are different exercises and are never used interchangeably.** A rehearsal is disposable, closes no gate and produces no evidence; the pilot is the formal exercise whose `PASS` is a `GATE B1` prerequisite. Neither has run.
+> **The development integration rehearsal `REHEARSAL-WIN-01` and the formal integration pilot `PILOT-WIN-01` are different exercises and are never used interchangeably.** A rehearsal is disposable, closes no gate and produces no evidence; the pilot is the formal exercise whose `PASS` is a `GATE B1` prerequisite.
+>
+> **`REHEARSAL-WIN-01` has run and closed `PASS` with findings.** Its output is **permanently ineligible as research evidence**, and it **did not close `GATE B1`** — a rehearsal cannot. **`PILOT-WIN-01` has not run.**
 
 | Collector | Pilot-candidate version | Current verification | Project role |
 | --- | --- | --- | --- |
-| [Voight-Kampff](collectors/voight-kampff/) | Agent 2.1.1; schema 1.1; JSON depth 10 | 18 study-relevant modules, 46 acquisition units; **646/646** Pester tests passed at agent 2.1.1 (Pester 6.1.0, Windows PowerShell Desktop 5.1.26100.9168). Live integration-validation run on `CAPSTONE-WIN-01`: 45 modules executed, 46/46 units `success` | Collects versioned Windows endpoint evidence and explicit acquisition outcomes. |
+| [Voight-Kampff](collectors/voight-kampff/) | Agent 2.3.0; schema 1.2; JSON depth 10 | 46 modules, 48 acquisition units, 20 of those modules instrumented; **753/753** Pester tests passed at agent 2.3.0 (Pester 6.1.0, Windows PowerShell Desktop 5.1.26100.9168). Development live validation, 2026-09-05: 137 valid optional-feature records, 48/48 units `success` | Collects versioned Windows endpoint evidence and explicit acquisition outcomes. |
 | [VulnSight](collectors/vulnsight/) | 0.3.1; Nessus export manifest 1.1 | 781/781 pytest tests | Acquires an explicitly selected native `.nessus` export and writes its acquisition manifest and SHA-256. |
 
 These results establish behaviour against the collectors' test contracts. They do not, by themselves, establish that a real campaign is complete, that every provider works on every target, or that collected evidence is eligible for the final experiment.
 
-**Voight-Kampff 2.1.1 merge state.** The 2.1.1 live-provider edge-case repair is **merged into `main`** through **pull request #1**, at merge commit `a928acd942cae2dd071f416700eaaa9e6a4f421a`. Its history is preserved: repair commit `afa421ead68d94a678d96766424c6ead9f689933` (*fix(voight): handle empty Windows provider values*) and documentation commit `6830dce3feecc595eb9fbf351593ca9871b1552f` are ancestors of the merge and are **not interchangeable** with it as provenance identities. **2.1.1 remains untagged, unfrozen and not campaign-ready.** Its live runs on `CAPSTONE-WIN-01` are **integration-validation** runs — not the coordinated campaign rehearsal `REHEARSAL-WIN-01`, not `PILOT-WIN-01`, and not controlled campaign evidence.
+**Voight-Kampff 2.3.0 state.** Agent 2.3.0 adds the complete Windows optional-feature inventory as raw evidence. Schema moves 1.1 → 1.2, an **additive** increment: the five-section envelope, acquisition entry shape and four-value outcome vocabulary are unchanged, and no existing field path is added to, removed, moved or redefined. Its source provenance is implementation commit `2f93b4b9bd19329952c22de47ee587483882f1f3` on branch `feat/voight-2.3-evidence-expansion`. **As recorded on 2026-09-05 it was pending merge at the time of this record, and was untagged and unfrozen when observed; no freeze identity existed for it on that date.** These are dated observations, not permanent states - **read current branch, merge, tag and freeze status from the repository.**
+
+**Development live validation, 2026-09-05.** A development run of the generated 2.3.0 standalone returned **137 valid optional-feature records, 48/48 successful acquisition units, no duplicate feature names, no malformed records, and correct ordinal ordering**. **The live run and the generated standalone are development validation artefacts.** They are **not** formal-pilot output, **not** research evidence, and **not** a freeze identity.
+
+**Voight-Kampff 2.1.1 merge state (historical).** The 2.1.1 live-provider edge-case repair is **merged into `main`** through **pull request #1**, at merge commit `a928acd942cae2dd071f416700eaaa9e6a4f421a`. Its history is preserved: repair commit `afa421ead68d94a678d96766424c6ead9f689933` (*fix(voight): handle empty Windows provider values*) and documentation commit `6830dce3feecc595eb9fbf351593ca9871b1552f` are ancestors of the merge and are **not interchangeable** with it as provenance identities. **2.1.1 remains untagged, unfrozen and not campaign-ready**, and is **superseded as the current version** by 2.3.0. Its live runs on `CAPSTONE-WIN-01` are **integration-validation** runs — not `REHEARSAL-WIN-01`, not `PILOT-WIN-01`, and not controlled campaign evidence.
+
+**Rehearsal findings.** `ISS-005` remains part of the `REHEARSAL-WIN-01` historical record and is not rewritten by any later work; its **technical cause has since been corrected and live-validated in Voight-Kampff 2.2.0 and 2.3.0**. `ISS-004` remains an open **formal-pilot procedural reminder**: start instrumented timing **before** snapshot restoration.
 
 ## Repository layout
 
@@ -76,10 +84,15 @@ Capstone-relevant capabilities include:
 - Windows host, service, process, software, network, security-control, user, group, session, and profile observations admitted by the project design;
 - domain-aware current-session and session-principal evidence;
 - recent-profile evidence explicitly marked as a profile-use proxy rather than an interactive-logon record;
+- the complete Windows optional-feature inventory as raw evidence;
 - modular-runner and generated-standalone parity; and
 - dependency-free Windows PowerShell 5.1 operation.
 
-The remaining feature-state extension is intentionally not populated until the frozen contextual registry supplies exact Windows feature identifiers and authoritative documentation. General feature inventory is out of scope.
+**Windows optional-feature collection (agent 2.3.0).** The collector now records the **full** optional-feature inventory as raw evidence, under `host.windows_optional_features`, governed by the single acquisition unit `host.windows_optional_features.inventory`. Each record carries exactly `feature_name` and `state`. The provider's own state string is preserved verbatim and **never reduced to a Boolean**, so `Enabled`, `Disabled`, `DisabledWithPayloadRemoved`, `EnablePending` and `DisablePending` remain distinct observations. Records are ordered deterministically by `feature_name` using an ordinal comparison.
+
+**There is no allowlist and no analytical interpretation.** The collector applies no project-specific feature filter, attaches no category or security label, and makes no risk, applicability or compliance judgement. **Research-specific feature selection and contextual interpretation remain downstream artefact responsibilities** — the collector's job is to record what the host reported.
+
+This supersedes the earlier position that feature-state collection had to wait on the frozen contextual registry supplying exact identifiers. That position coupled a *collection* question to an *analysis* question; collecting the whole inventory removes the coupling, because the identifiers the research eventually selects are already present in the artefact.
 
 See [the Voight-Kampff README](collectors/voight-kampff/README.md) for collector-specific instructions.
 
@@ -109,7 +122,7 @@ See [the VulnSight README](collectors/vulnsight/README.md) for installation, con
 | --- | --- | --- |
 | Host–CVE–campaign occurrence | VulnSight supplies the selected native Nessus evidence and acquisition manifest. | The artefact parses admitted findings, resolves host and campaign identity, and consolidates supporting observations. |
 | C1: Remote reachability | Nessus supplies scanner-vantage observations; Voight-Kampff supplies listener and service state. | The artefact evaluates coverage, authority, conflicts, and the frozen applicability rule. |
-| C2: Component state | Voight-Kampff supplies service, process, installed-product, and—where later admitted—exact optional-feature state. | The artefact maps the affected component and resolves present, absent, neutral, or unknown evidence. |
+| C2: Component state | Voight-Kampff supplies service, process, installed-product, and the complete raw optional-feature inventory. | The artefact selects the study-relevant feature identifiers, maps the affected component, and resolves present, absent, neutral, or unknown evidence. |
 | C3: Exploit prerequisite | Voight-Kampff, Nessus, and mapped CIS-CAT evidence may supply admitted observations. | The artefact requires an exact authoritative exploit-path warrant and frozen field mapping. |
 | C4: Compensating mitigation | Voight-Kampff and mapped CIS-CAT findings supply observable settings. | The artefact applies the frozen mitigation mapping without treating aggregate compliance scores as evidence. |
 | C5: Interactive use | Voight-Kampff supplies direct current-session evidence and recent-profile proxy evidence. | The artefact may confirm relevant interactive use from direct evidence; proxy-only or missing evidence remains unknown. |

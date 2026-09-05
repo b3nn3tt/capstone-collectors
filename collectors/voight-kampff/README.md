@@ -2,15 +2,15 @@
 
 A PowerShell-based Windows evidence collector that produces versioned JSON output with explicit acquisition provenance. The agent runs locally on a host, executes modular checks, and records structured endpoint observations that a separate artefact can ingest.
 
-**Current state:** agent 2.3.0 is mock-tested only; **no live collector run has been performed for 2.3.0**. Not yet committed, tagged, frozen, formally pilot-ready or campaign-ready.
+**Current state, as recorded on 2026-09-05.** Agent 2.3.0 is mock-tested and development live-validated. It is committed on branch `feat/voight-2.3-evidence-expansion`; at the time of this record it is **pending merge**, and it is **untagged and unfrozen**. It is **not** formally pilot-ready or campaign-ready. Merge, tag and freeze states change independently of this file - treat the repository, not this paragraph, as authoritative for them.
 
 **Versions:** agent 2.3.0; schema 1.2; JSON depth 10.
 
 Agent 2.3.0 is a MINOR, backwards-compatible evidence expansion. It adds the complete Windows optional-feature inventory as raw endpoint evidence, under one new governed acquisition unit. **Schema 1.2 is ADDITIVE over 1.1**: the five-section envelope, the acquisition entry shape and the four-value outcome vocabulary are unchanged, no existing field path moves, vanishes or changes meaning, and a 1.1 consumer that ignores the new section reads a 1.2 artefact exactly as it read a 1.1 one. JSON depth 10 is retained, confirmed by the depth tests against the new structure rather than assumed. See the [changelog](CHANGELOG.md).
 
-**Mock-tested.** The complete 2.3.0 suite passed **753/753** tests under Windows PowerShell Desktop 5.1.26100.9168 and Pester 6.1.0, with 0 failed, 0 skipped, 0 inconclusive and 0 not run. The focused optional-feature suite contributed **48/48**. No live collector was run for this tranche.
+**Mock-tested and development live-validated.** The complete 2.3.0 suite passed **753/753** tests under Windows PowerShell Desktop 5.1.26100.9168 and Pester 6.1.0, with 0 failed, 0 skipped, 0 inconclusive and 0 not run. The focused optional-feature suite contributed **48/48**. A separate development live validation on 2026-09-05 returned 137 valid optional-feature records, 48/48 successful acquisition units, no duplicate feature names, no malformed records and correct ordinal ordering.
 
-**Development state.** Agent 2.3.0 is being prepared on branch `feat/voight-2.3-evidence-expansion`, based on `main` revision `336194bc087e0b40d14f75be8acddc9e081f0701`. Mocked validation has passed; **live-provider validation of the new module has not been performed.** **Not yet tagged, frozen, pilot-ready or campaign-ready.**
+**Development state.** Agent 2.3.0 was developed on branch `feat/voight-2.3-evidence-expansion`, based on `main` revision `336194bc087e0b40d14f75be8acddc9e081f0701`. Its source provenance is implementation commit `2f93b4b9bd19329952c22de47ee587483882f1f3`. Mocked validation and development live validation have both passed. **At the time of this record the branch is pending merge; the agent is untagged, unfrozen, and neither pilot-ready nor campaign-ready.**
 
 **Agent 2.2.0 (historical).** A MINOR acquisition uplift adding one governed Windows Update acquisition unit. Suite: 659/659. A disposable live run reproduced HRESULT `0x8024402C` and emitted one `failed` / `provider_query_failed` unit with both pending-update values `null`; the remaining 46 units succeeded.
 
@@ -191,9 +191,9 @@ Without elevation the provider is **not invoked at all** — no servicing sessio
 | Passed | **753** |
 | Failed / Skipped / Inconclusive / Not run | **0 / 0 / 0 / 0** |
 | Suite result | **`Passed`** |
-| Coverage | 19 study-relevant modules, **46 modules and 48 acquisition units** at agent 2.3.0 |
+| Coverage | **20 instrumented (study-relevant) modules; 46 modules and 48 acquisition units** at agent 2.3.0 |
 | Focused optional-feature suite | 48 passed, 0 failed |
-| Live collector run at 2.3.0 | **None. No live collection was performed for this tranche.** |
+| Development live validation at 2.3.0 | 2026-09-05 - 137 valid optional-feature records, 48/48 acquisition units `success`, no duplicates, no malformed records, correct ordinal ordering. **Development validation only: not formal-pilot output, not research evidence, not a freeze identity.** |
 | Agent 2.2.0 baseline (historical) | 659 passed, 0 failed, 0 skipped, 0 inconclusive, 0 not run |
 | Agent 2.1.1 baseline (historical) | 646 passed, 0 failed, 0 skipped, 0 inconclusive, 0 not run |
 | Agent 2.1.0 baseline (historical) | 617 passed, 0 failed, 0 skipped, 0 not run |
@@ -202,7 +202,7 @@ A green suite establishes that the implemented contract behaves as specified. It
 
 **On the earlier 21-failure result.** An earlier validation attempt reported 21 failures. That was **validation-harness contamination caused by caller-imposed `StrictMode`, not 21 production defects.** The clean rerun against the committed source, with caller-imposed StrictMode `Off`, passed all **646** tests. The 21-failure figure must not be cited as a defect count.
 
-**Live provider behaviour at 2.3.0.** None. The optional-feature module has been validated against mocked providers only. `Get-WindowsOptionalFeature -Online` has not been exercised on a live host at this version, and no output from 2.3.0 may be cited as live-provider evidence.
+**Live provider behaviour at 2.3.0.** A development live validation was performed on 2026-09-05: 137 valid optional-feature records, 48/48 acquisition units `success`, no duplicate feature names, no malformed records and correct ordinal ordering. **This was development validation only.** The live run and the generated standalone are development artefacts - **not formal-pilot output, not research evidence, and not a freeze identity** - and no output from 2.3.0 may be cited as controlled campaign evidence.
 
 **Live provider behaviour at 2.2.0 (historical).** A non-campaign 2.2.0 run on `CAPSTONE-WIN-01` completed from `2026-09-04T08:34:01.0192409Z` to `2026-09-04T08:34:27.2928748Z`. It reproduced HRESULT `0x8024402C`; `host.windows_updates.pending_updates` reported `failed` / `provider_query_failed`, while `pending_count` and `pending_updates` were both `null`. The remaining 46 units succeeded. Evidence SHA-256: `d4347b5fd992ce9286c402b9bcc54a69cb9c574e2860a9b31014107c9ea93d57`. The VM was subsequently reverted to `POST-REHEARSAL__PRE-VK-2.2.0-TEST`.
 
