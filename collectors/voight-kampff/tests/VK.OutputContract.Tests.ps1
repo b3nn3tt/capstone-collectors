@@ -517,8 +517,16 @@ Describe 'Schema 1.2 is additive over schema 1.1' {
         'security.antivirus.product_name'
         'vulnerability.token_privileges'
     ) {
-        # A 1.1 consumer must read a 1.2 artefact exactly as it read a 1.1
-        # one, so no existing path may move, vanish or change meaning.
+        # Schema 1.2 is structurally additive: all schema 1.1 paths and
+        # shapes remain unchanged, so no existing path may move, vanish
+        # or change meaning.
+        #
+        # SCOPE OF THIS TEST. It proves PRESERVATION OF EXISTING PATHS.
+        # It does NOT prove compatibility with consumers that reject
+        # newer schema versions: compatibility additionally requires the
+        # consumer to accept schema version 1.2 and ignore the newly
+        # added field, which is a property of the consumer rather than
+        # of this artefact.
         $current = $script:Reparsed
         foreach ($segment in ($_ -split '\.')) {
             $current | Should -Not -BeNullOrEmpty -Because "'$_' must still resolve"

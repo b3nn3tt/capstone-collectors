@@ -47,7 +47,7 @@ No `DisplayName`, `Description`, `RestartRequired`, `CustomProperties`, category
 ### Changed
 
 - Agent version **2.2.0 → 2.3.0**.
-- Schema version **1.1 → 1.2**, additive. The five-section envelope, the acquisition entry shape, the field order and the four-value outcome vocabulary are unchanged. **No existing field path is added to, removed, moved or redefined**, and no existing field changes meaning. A schema 1.1 consumer that ignores the new section reads a 1.2 artefact exactly as it read a 1.1 one.
+- Schema version **1.1 → 1.2**. **Schema 1.2 is structurally additive: all schema 1.1 paths and shapes remain unchanged.** The five-section envelope, the acquisition entry shape, the field order and the four-value outcome vocabulary are unchanged. **No existing field path is added to, removed, moved or redefined**, and no existing field changes meaning. **Compatibility requires the consumer to accept schema version 1.2 and ignore the newly added field.**
 - **JSON depth remains 10**, retained rather than assumed: the new structure nests root → `host` → section → record → scalar, shallower than the deepest existing payload path, and the depth tests assert the new records survive serialisation at 10 with a paired negative control at depth 2.
 - Schema-evolution comments updated in `core/VK.Config.ps1`, `core/VK.Utilities.ps1`, `core/Invoke-VKScan.ps1` and `build/Build-Standalone.ps1`.
 - The generated standalone filename expectation moves to `VoightKampff_Standalone_v2.3.0.ps1`. The builder already derives that name from `$script:VKAgentVersion`; the module list and host function map gained the new module so modular and generated-standalone output remain contract-equivalent.

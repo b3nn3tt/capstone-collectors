@@ -42,13 +42,17 @@
 #   by the schema 1.1 study contract: a study-relevant collection unit with
 #   no conforming acquisition entry makes the artefact schema-invalid.
 #
-#   Schema 1.2 is ADDITIVE over 1.1. It adds one new payload section,
+#   Schema 1.2 is STRUCTURALLY ADDITIVE: all schema 1.1 paths and shapes
+#   remain unchanged. It adds one new payload section,
 #   host.windows_optional_features, and its governing acquisition unit
 #   host.windows_optional_features.inventory. The five-section envelope,
 #   the acquisition entry shape and the four-value outcome vocabulary are
 #   unchanged, and no existing field path is added to, removed, moved or
-#   redefined. A 1.1 consumer that ignores the new section reads a 1.2
-#   artefact exactly as it read a 1.1 one.
+#   redefined.
+#
+#   Compatibility requires the consumer to accept schema version 1.2 and
+#   ignore the newly added field. A consumer that rejects unrecognised
+#   schema versions is NOT served by structural additivity alone.
 #
 #   The new section carries the COMPLETE optional-feature inventory as
 #   raw evidence: feature_name and the provider's own state string, with
