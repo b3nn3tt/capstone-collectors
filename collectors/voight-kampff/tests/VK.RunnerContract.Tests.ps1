@@ -250,9 +250,65 @@ Describe 'Modules: no case-insensitive parameter/variable collision' {
 }
 
 
+Describe 'Runner: schema 1.2 optional-feature module integration' {
+
+    It 'invokes Invoke-VKHostWindowsOptionalFeatures exactly once' {
+        $matched = @($script:RunnerCommands | Where-Object { $_ -eq 'Invoke-VKHostWindowsOptionalFeatures' })
+        $matched.Count | Should -Be 1
+    }
+
+    It 'records host.windows_optional_features in modules_executed exactly once' {
+        $literals = $script:RunnerAst.FindAll(
+            { param($node) $node -is [System.Management.Automation.Language.StringConstantExpressionAst] },
+            $true
+        )
+        $matched = @($literals | Where-Object { $_.Value -eq 'host.windows_optional_features' })
+        $matched.Count | Should -Be 1
+    }
+
+    It 'lists Host.WindowsOptionalFeatures.ps1 exactly once in $hostModuleFiles' {
+        $matched = @($script:BuildHostModuleFiles | Where-Object { $_ -eq 'Host.WindowsOptionalFeatures.ps1' })
+        $matched.Count | Should -Be 1
+    }
+
+    It 'maps Host.WindowsOptionalFeatures.ps1 to Invoke-VKHostWindowsOptionalFeatures' {
+        $script:BuildAst.Extent.Text |
+            Should -Match 'Host\.WindowsOptionalFeatures\.ps1"?\s*=\s*@\{\s*Func\s*=\s*"Invoke-VKHostWindowsOptionalFeatures"'
+    }
+
+    It 'preserves the established host-module execution order ahead of it' {
+        # The new module is APPENDED, so no existing module's position moves.
+        $hostOrder = @(
+            $script:RunnerAst.FindAll(
+                { param($node) $node -is [System.Management.Automation.Language.StringConstantExpressionAst] },
+                $true
+            ) | ForEach-Object { $_.Value } | Where-Object { $_ -like 'Host.*.ps1' }
+        )
+
+        $hostOrder[-1] | Should -Be 'Host.WindowsOptionalFeatures.ps1'
+        $hostOrder[0..($hostOrder.Count - 2)] | Should -Be @(
+            'Host.Identification.ps1'
+            'Host.Hardware.ps1'
+            'Host.Boot.ps1'
+            'Host.Storage.ps1'
+            'Host.Network.ps1'
+            'Host.NetworkConfig.ps1'
+            'Host.Users.ps1'
+            'Host.Sessions.ps1'
+            'Host.Software.ps1'
+            'Host.WindowsUpdates.ps1'
+            'Host.Processes.ps1'
+            'Host.Services.ps1'
+            'Host.Drivers.ps1'
+            'Host.USBHistory.ps1'
+        )
+    }
+}
+
+
 Describe 'Runner: output envelope declaration' {
 
-    It 'declares the five required top-level sections (schema 1.1)' {
+    It 'declares the five required top-level sections (schema 1.2)' {
         # Updated from four to five in Tranche 2A. The acquisition section
         # is additive for existing consumers but REQUIRED by the schema 1.1
         # study contract.

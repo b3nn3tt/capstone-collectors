@@ -7,21 +7,44 @@ This file records the exact collector versions imported into this repository and
 | Upstream lineage | Private upstream repository: b3nn3tt/voight_kampff_windows_agent | https://github.com/b3nn3tt/vulnsight |
 | Import date | 2026-08-19 | 2026-08-19 |
 | Imported subdirectory | `collectors/voight-kampff` | `collectors/vulnsight` |
-| Tool version | Agent 2.1.1 | 0.3.1 |
-| Evidence schema | Agent schema 1.1; JSON depth 10 | Nessus export manifest 1.1 |
+| Tool version | Agent 2.3.0 | 0.3.1 |
+| Evidence schema | Agent schema 1.2; JSON depth 10 | Nessus export manifest 1.1 |
 | Primary runtime | Windows PowerShell 5.1 | Python 3.11 |
 | Test framework | Pester 6.1.0 | pytest 9.1.1 |
-| Verified test result | **646 total; 646 passed; 0 failed; 0 skipped; 0 inconclusive; 0 not run; suite result `Passed`** at agent 2.1.1 — Pester 6.1.0 on Windows PowerShell Desktop 5.1.26100.9168, definitive committed-source duration `00:00:18.5527668`, caller-imposed StrictMode `Off`. The agent 2.1.0 baseline of 617 passed / 0 failed / 0 skipped / 0 not run is preserved as history, superseded as the latest executed result. | 781 passed; 0 failed |
-| Module/unit summary | 45 modules executed; 18 study-relevant instrumented modules; 46 acquisition units | Native `.nessus` acquisition and manifest workflow |
-| Source branch / commit for the current version | `main` @ `a928acd942cae2dd071f416700eaaa9e6a4f421a`, repository clean — **merged through pull request #1**; repair commit `afa421ead68d94a678d96766424c6ead9f689933` and documentation commit `6830dce3feecc595eb9fbf351593ca9871b1552f` are preserved ancestors. **Merged but not tagged and not frozen** | `main` @ `795ed1ed3df4c888e70dfa85bef01a5835caae71` |
-| Live integration-validation run | `CAPSTONE-WIN-01`, 2026-08-28 — 45 modules executed, 46 acquisition units, **46 success / 0 failed / 0 restricted / 0 unavailable**. Integration validation only; **not** rehearsal, pilot or controlled campaign evidence | Non-campaign export validation, 2026-08-27 (scans `10`/`12` and `15`/`16`) |
-| Current state | **Integration-validated acquisition component. Merged, untagged, unfrozen.** **Not formal-pilot-ready** — the registry-restricted feature-state extension is absent (blocked on the WS-E feature-identifier slice) | **Integration-validated acquisition component. Unfrozen.** |
+| Verified test result | **753 total; 753 passed; 0 failed; 0 skipped; 0 inconclusive; 0 not run; suite result `Passed`** at agent 2.3.0 — Pester 6.1.0 on Windows PowerShell Desktop 5.1.26100.9168, caller-imposed StrictMode `Off`. Preserved as history and superseded as the latest executed result: agent 2.2.0 — 659 passed; agent 2.1.1 — 646 passed, definitive committed-source duration `00:00:18.5527668`; agent 2.1.0 — 617 passed. | 781 passed; 0 failed |
+| Module/unit summary | **46 modules; 48 acquisition units; 20 instrumented (study-relevant) modules** — counted from the repository at the commit below, not carried forward. The earlier "18 study-relevant modules" figure was understated and is corrected here. | Native `.nessus` acquisition and manifest workflow |
+| Source branch / commit for the current version | `feat/voight-2.3-evidence-expansion` @ `2f93b4b9bd19329952c22de47ee587483882f1f3`, repository clean — implementation commit *feat(voight-kampff): collect Windows optional feature inventory*. **Pending merge at the time of this record (2026-09-05); not tagged and not frozen when observed on that date.** Current branch, merge, tag and freeze status must be obtained from the repository. Superseded ancestor provenance for 2.1.1 is preserved below | `main` @ `795ed1ed3df4c888e70dfa85bef01a5835caae71` |
+| Live validation run | **Development live validation, 2026-09-05** — 137 valid optional-feature records, **48/48 acquisition units `success`**, no duplicate feature names, no malformed records, correct ordinal ordering. **Development validation only; not formal-pilot output, not research evidence, and not a freeze identity** | Non-campaign export validation, 2026-08-27 (scans `10`/`12` and `15`/`16`) |
+| Current state (as recorded 2026-09-05) | **Development-validated acquisition component. Pending merge at the time of this record; untagged and unfrozen when observed.** Read current branch, merge, tag and freeze status from the repository rather than from this row. Collects the complete Windows optional-feature inventory as raw evidence, with no allowlist and no analytical interpretation | **Integration-validated acquisition component. Merged, unfrozen.** |
 | Final freeze tag | NOT YET FROZEN | NOT YET FROZEN |
 | Final artefact checksum | NOT YET FROZEN | NOT YET FROZEN |
 
 The authoritative public snapshot begins with import commit 81f201307613e341c607b027e62fe5076b5ff9b9.
 
-## Agent 2.1.1 build provenance (definitive build, 2026-08-28)
+## Agent 2.3.0 scope and evidence boundary
+
+| Field | Value |
+| --- | --- |
+| Schema increment | 1.1 → **1.2**, **additive** — five-section envelope, acquisition entry shape, field order and four-value outcome vocabulary all unchanged; no existing field path added to, removed, moved or redefined |
+| New payload section | `host.windows_optional_features` |
+| New acquisition unit | `host.windows_optional_features.inventory` (provider `Get-WindowsOptionalFeature -Online`) |
+| Record shape | exactly `feature_name` and `state`; provider state string preserved verbatim and never reduced to a Boolean |
+| Ordering | deterministic ordinal by `feature_name` |
+| Collector interpretation | **None.** No allowlist, no category or security label, no risk, applicability or compliance judgement |
+| Downstream responsibility | **Research-specific feature selection and contextual interpretation belong to the dissertation artefact, not the collector** |
+
+## Rehearsal and pilot state
+
+| Exercise | State |
+| --- | --- |
+| `REHEARSAL-WIN-01` (development integration rehearsal) | **Has run. Closed `PASS` with findings.** Its output is **permanently ineligible as research evidence**, and it **did not close `GATE B1`** — a rehearsal cannot close that gate |
+| `PILOT-WIN-01` (formal single-host integration pilot) | **Has not run.** Its `PASS` remains the `GATE B1` prerequisite |
+| `ISS-005` | Remains part of the `REHEARSAL-WIN-01` historical record and is not rewritten. Its **technical cause has been corrected and live-validated in agent 2.2.0 and 2.3.0** |
+| `ISS-004` | Open **formal-pilot procedural reminder**: start instrumented timing **before** snapshot restoration |
+
+## Agent 2.1.1 build provenance (definitive build, 2026-08-28) — SUPERSEDED
+
+> **SUPERSEDED as the current version by agent 2.3.0** (see the matrix above). Retained unchanged as historical information: it records the 2.1.1 build identity and the reproducibility limitation observed at that time. **It was never a freeze, and it is not the current build identity.**
 
 Recorded here because the freeze fields above are still empty and this is the identity a later freeze would be taken from. **It is not a freeze.**
 
@@ -47,4 +70,5 @@ Recorded here because the freeze fields above are still empty and this is the id
 - Record the source commit before copying.
 - Run each collector's documented tests after import.
 - Record any difference between the source commit and imported tree.
-- Do not mark a version frozen until the **formal** single-host pilot `PILOT-WIN-01` has passed and the collection bundle has been checksummed. **The disposable development rehearsal `REHEARSAL-WIN-01` is a different exercise and can never substitute for it.** Neither has run, and the freeze fields above remain deliberately empty.
+- Do not mark a version frozen until the **formal** single-host pilot `PILOT-WIN-01` has passed and the collection bundle has been checksummed. **The disposable development rehearsal `REHEARSAL-WIN-01` is a different exercise and can never substitute for it.** `REHEARSAL-WIN-01` has run and closed `PASS` with findings; `PILOT-WIN-01` has not run, so the freeze fields above remain deliberately empty.
+- Development validation builds and their live runs are **not** freeze identities. Do not record a development standalone checksum in the freeze fields.

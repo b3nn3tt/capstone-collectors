@@ -41,10 +41,27 @@
 #   consumers that read only the original four sections, but it is REQUIRED
 #   by the schema 1.1 study contract: a study-relevant collection unit with
 #   no conforming acquisition entry makes the artefact schema-invalid.
+#
+#   Schema 1.2 is STRUCTURALLY ADDITIVE: all schema 1.1 paths and shapes
+#   remain unchanged. It adds one new payload section,
+#   host.windows_optional_features, and its governing acquisition unit
+#   host.windows_optional_features.inventory. The five-section envelope,
+#   the acquisition entry shape and the four-value outcome vocabulary are
+#   unchanged, and no existing field path is added to, removed, moved or
+#   redefined.
+#
+#   Compatibility requires the consumer to accept schema version 1.2 and
+#   ignore the newly added field. A consumer that rejects unrecognised
+#   schema versions is NOT served by structural additivity alone.
+#
+#   The new section carries the COMPLETE optional-feature inventory as
+#   raw evidence: feature_name and the provider's own state string, with
+#   no allowlist, no risk classification and no compliance judgement.
+#   Selecting research-specific identifiers is a downstream concern.
 # ============================================================
 
-$script:VKAgentVersion  = "2.2.0"
-$script:VKSchemaVersion = "1.1"
+$script:VKAgentVersion  = "2.3.0"
+$script:VKSchemaVersion = "1.2"
 
 
 # ============================================================
@@ -67,6 +84,12 @@ $script:VKErrorLogFile = "error.log"
 # extensions need margin. Windows PowerShell 5.1 truncates SILENTLY,
 # substituting a .NET type name for the lost content, so this value must be
 # re-verified by the depth tests whenever nesting changes.
+#
+# Retained at 10 for schema 1.2. The new host.windows_optional_features
+# section nests to root -> host -> section -> record -> scalar, which is
+# shallower than the deepest existing payload path, so it needs no extra
+# margin. The depth tests confirm the new structure survives serialisation
+# at this value rather than assuming it.
 $script:VKJsonDepth    = 10
 
 

@@ -6,9 +6,13 @@
     Initialises the scan environment, loads core utilities and config,
     dot-sources modules, executes checks, and assembles the final JSON output.
 
-    Output follows the schema 1.1 five-key envelope:
+    Output follows the schema 1.2 five-key envelope (unchanged in shape
+    from schema 1.1; 1.2 is an ADDITIVE increment that adds the
+    host.windows_optional_features payload section and its governing
+    acquisition unit):
         scan_metadata  - about the scan itself (includes schema_version for API contract)
-        acquisition    - per-collection-unit acquisition outcomes (schema 1.1)
+        acquisition    - per-collection-unit acquisition outcomes
+                         (introduced at schema 1.1; shape unchanged at 1.2)
         host           - Section 1: host enumeration findings
         security       - Section 2: security configuration findings
         vulnerability  - Section 3: vulnerability assessment findings
@@ -23,7 +27,7 @@
 
 .NOTES
     Author:  b3nn3tt@hbcomputersecurity.co.uk
-    Version: 2.1.1
+    Version: 2.3.0
     GitHub:  https://github.com/b3nn3tt
 #>
 
@@ -93,7 +97,7 @@ if (Test-Path $script:ErrorLogPath) {
     Remove-Item $script:ErrorLogPath
 }
 
-# --- Initialise Data Envelope (schema 1.1: five ordered sections) ---
+# --- Initialise Data Envelope (schema 1.2: five ordered sections) ---
 $data = [ordered]@{
     "scan_metadata" = [ordered]@{}
     "acquisition"   = [ordered]@{}
@@ -188,6 +192,13 @@ $modulesExecuted.Add("host.drivers") | Out-Null
 . (Join-Path $script:HostModules "Host.USBHistory.ps1")
 Invoke-VKHostUSBHistory -Data $data["host"] -IsAdmin $script:IsAdmin
 $modulesExecuted.Add("host.usb_history") | Out-Null
+
+# Host Windows Optional Features (schema 1.2, additive)
+# Appended after the established host order so no existing module's
+# position changes.
+. (Join-Path $script:HostModules "Host.WindowsOptionalFeatures.ps1")
+Invoke-VKHostWindowsOptionalFeatures -Data $data["host"] -IsAdmin $script:IsAdmin
+$modulesExecuted.Add("host.windows_optional_features") | Out-Null
 
 # --- Section 2: Security Configuration ---
 Write-SectionHeader -Title "SECTION 2: Security Configuration"
@@ -372,7 +383,7 @@ $data["scan_metadata"] = [ordered]@{
     "modules_executed"      = @($modulesExecuted)
 }
 
-# --- Acquisition Section (schema 1.1) ---
+# --- Acquisition Section (schema 1.2; introduced at 1.1) ---
 # Fail-closed backstop: any unit still unresolved becomes
 # failed / incomplete_collection. Must run before serialisation.
 Complete-VKAcquisitionReport

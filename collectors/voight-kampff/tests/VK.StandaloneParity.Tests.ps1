@@ -204,20 +204,20 @@ Describe 'Generated standalone script' {
 
     Context 'contract, versions and parity' {
 
-        It 'declares schema version 1.1' {
-            $script:GeneratedText | Should -Match '\$script:VKSchemaVersion\s*=\s*"1\.1"'
+        It 'declares schema version 1.2' {
+            $script:GeneratedText | Should -Match '\$script:VKSchemaVersion\s*=\s*"1\.2"'
         }
 
-        It 'declares agent version 2.2.0' {
-            $script:GeneratedText | Should -Match '\$script:VKAgentVersion\s*=\s*"2\.2\.0"'
+        It 'declares agent version 2.3.0' {
+            $script:GeneratedText | Should -Match '\$script:VKAgentVersion\s*=\s*"2\.3\.0"'
         }
 
-        It 'is written to the 2.2.0 version-stamped filename' {
+        It 'is written to the 2.3.0 version-stamped filename' {
             # The build stamps the configured agent version into the output
             # file name, so a missed version bump would ship an artefact
             # whose name contradicts its own declared agent version.
             [System.IO.Path]::GetFileName($script:GeneratedPath) |
-                Should -Be 'VoightKampff_Standalone_v2.2.0.ps1'
+                Should -Be 'VoightKampff_Standalone_v2.3.0.ps1'
         }
 
         It 'preserves UTF-8 source text without mojibake' {
@@ -334,8 +334,42 @@ Describe 'Generated standalone script' {
             'host.sessions.current_sessions'
             'host.sessions.session_principals'
             'host.sessions.user_profiles'
+            # Schema 1.2
+            'host.windows_optional_features.inventory'
         ) {
             $script:GeneratedText | Should -BeLike "*$_*"
+        }
+
+        It 'embeds the schema 1.2 optional-feature module' {
+            $script:GeneratedText |
+                Should -Match 'function\s+Invoke-VKHostWindowsOptionalFeatures\s*\{'
+        }
+
+        It 'invokes the optional-feature module exactly once in the runner logic' {
+            $invocations = @(
+                $script:GeneratedAst.FindAll(
+                    { param($n) $n -is [System.Management.Automation.Language.CommandAst] },
+                    $true) |
+                    ForEach-Object { $_.GetCommandName() } |
+                    Where-Object { $_ -eq 'Invoke-VKHostWindowsOptionalFeatures' }
+            )
+            $invocations.Count | Should -Be 1
+        }
+
+        It 'carries no project-specific optional-feature allowlist into the artefact' {
+            # The generated collector must emit the COMPLETE inventory. A
+            # filter over named features would make the artefact carry a
+            # dissertation-specific selection the collector must not make.
+            $script:GeneratedText | Should -Not -Match '\$\w*(?i:AllowedFeature|FeatureAllowList|TargetFeature|RelevantFeature)\w*\s*='
+            $script:GeneratedText | Should -Not -Match 'VKOptionalFeature(?:Allow|Target|Relevant)'
+        }
+
+        It 'emits no interpreted optional-feature field' -ForEach @(
+            'DisplayName', 'RestartRequired', 'CustomProperties'
+        ) {
+            # Scoped to the emitted record shape rather than the whole
+            # artefact: these must never appear as a payload key.
+            $script:GeneratedText | Should -Not -Match "`"$_`"\s*="
         }
 
         It 'embeds the Tranche 2C WTS interop the sessions module depends on' -ForEach @(

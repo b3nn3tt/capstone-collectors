@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Pester tests for the Voight-Kampff schema 1.1 JSON output contract.
+    Pester tests for the Voight-Kampff schema 1.2 JSON output contract.
 
 .DESCRIPTION
     Verifies the shape of the agent's output envelope, the acquisition
@@ -17,6 +17,9 @@
     - schema 1.0 legacy examples cannot support empty-result absence
     - the representative fixture survives serialisation at depth 10
     - truncation is detected loudly rather than passing silently
+    - the additive schema 1.2 host.windows_optional_features section:
+      raw feature_name / state only, unreduced provider state strings,
+      deterministic ordinal ordering, and no schema 1.1 path disturbed
 
     The depth tests are deliberately BEHAVIOURAL: they serialise at
     whatever depth VK.Config.ps1 declares, on whatever PowerShell edition
@@ -128,9 +131,16 @@ BeforeAll {
         'host.sessions.user_profiles'
     )
 
+    # Schema 1.2 (agent 2.3.0). One additive unit governing the complete
+    # Windows optional-feature inventory.
+    $script:Schema12UnitIds = @(
+        'host.windows_optional_features.inventory'
+    )
+
     $script:AllInstrumentedUnitIds = @(
         $script:Tranche2AUnitIds + $script:Tranche2B1UnitIds +
-        $script:Tranche2B2UnitIds + $script:Tranche2CUnitIds
+        $script:Tranche2B2UnitIds + $script:Tranche2CUnitIds +
+        $script:Schema12UnitIds
     )
 
     # Governed data paths per unit, asserted exactly. A renamed or dropped
@@ -152,6 +162,7 @@ BeforeAll {
         'host.sessions.current_sessions'      = @('host.sessions.current_sessions', 'host.sessions.current_sessions_summary')
         'host.sessions.session_principals'    = @('host.sessions.session_principals', 'host.sessions.session_principals_summary')
         'host.sessions.user_profiles'         = @('host.sessions.observation_window', 'host.sessions.user_profiles', 'host.sessions.user_profiles_summary')
+        'host.windows_optional_features.inventory' = @('host.windows_optional_features')
     }
 
     $script:PermittedOutcomes = @('success', 'failed', 'restricted', 'unavailable')
@@ -160,12 +171,12 @@ BeforeAll {
 
 Describe 'Central configuration' {
 
-    It 'declares agent version 2.2.0' {
-        $script:ConfiguredAgent | Should -Be '2.2.0'
+    It 'declares agent version 2.3.0' {
+        $script:ConfiguredAgent | Should -Be '2.3.0'
     }
 
-    It 'declares schema version 1.1' {
-        $script:ConfiguredSchema | Should -Be '1.1'
+    It 'declares schema version 1.2' {
+        $script:ConfiguredSchema | Should -Be '1.2'
     }
 
     It 'declares JSON depth 10' {
@@ -243,9 +254,11 @@ Describe 'Acquisition section (schema 1.1)' {
         $unexpected -join ', ' | Should -BeNullOrEmpty
     }
 
-    It 'emits exactly 47 acquisition entries' {
-        @($script:Reparsed.acquisition.PSObject.Properties.Name).Count | Should -Be 47
-        @($script:AllInstrumentedUnitIds).Count | Should -Be 47
+    It 'emits exactly 48 acquisition entries' {
+        # 47 at agent 2.2.0 / schema 1.1, plus the one additive schema 1.2
+        # unit host.windows_optional_features.inventory.
+        @($script:Reparsed.acquisition.PSObject.Properties.Name).Count | Should -Be 48
+        @($script:AllInstrumentedUnitIds).Count | Should -Be 48
     }
 
     It 'governs the documented data paths for <_>' -ForEach @(
@@ -265,6 +278,7 @@ Describe 'Acquisition section (schema 1.1)' {
         'host.sessions.current_sessions'
         'host.sessions.session_principals'
         'host.sessions.user_profiles'
+        'host.windows_optional_features.inventory'
     ) {
         $entry = $script:Reparsed.acquisition.$_
         $entry | Should -Not -BeNullOrEmpty
@@ -418,6 +432,129 @@ Describe 'Acquisition section (schema 1.1)' {
 }
 
 
+Describe 'Schema 1.2: host.windows_optional_features raw inventory' {
+
+    It 'emits the section as an array of records' {
+        @($script:Reparsed.host.windows_optional_features).Count |
+            Should -BeGreaterThan 0
+    }
+
+    It 'gives every record exactly feature_name and state' {
+        # EXACT, deliberately not a containment check: DisplayName,
+        # Description, RestartRequired, CustomProperties, a category or a
+        # security label appearing here would be interpretation the
+        # collector must not perform.
+        foreach ($feature in $script:Reparsed.host.windows_optional_features) {
+            @($feature.PSObject.Properties.Name) | Should -Be @('feature_name', 'state')
+        }
+    }
+
+    It 'emits no <_> field' -ForEach @(
+        'DisplayName', 'Description', 'RestartRequired', 'CustomProperties',
+        'category', 'risk', 'severity', 'applicable', 'compliant'
+    ) {
+        foreach ($feature in $script:Reparsed.host.windows_optional_features) {
+            $feature.PSObject.Properties.Name | Should -Not -Contain $_
+        }
+    }
+
+    It 'preserves the provider state string <_> unreduced' -ForEach @(
+        'Enabled', 'Disabled', 'DisabledWithPayloadRemoved',
+        'EnablePending', 'DisablePending'
+    ) {
+        # A Boolean reduction would collapse these five into two, and would
+        # misrepresent the two pending states as settled ones.
+        $states = @($script:Reparsed.host.windows_optional_features |
+            ForEach-Object { $_.state })
+        $states | Should -Contain $_
+    }
+
+    It 'holds no state reduced to a Boolean' {
+        foreach ($feature in $script:Reparsed.host.windows_optional_features) {
+            $feature.state | Should -BeOfType [string]
+            $feature.state | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    It 'is ordered deterministically by feature_name using an ordinal comparison' {
+        $names  = [string[]]@($script:Reparsed.host.windows_optional_features |
+            ForEach-Object { $_.feature_name })
+        $sorted = [string[]]@($names)
+        [Array]::Sort($sorted, [System.StringComparer]::Ordinal)
+
+        $names | Should -Be $sorted
+    }
+
+    It 'carries no case-insensitive duplicate feature name' {
+        $names = @($script:Reparsed.host.windows_optional_features |
+            ForEach-Object { $_.feature_name.ToLowerInvariant() })
+        @($names | Sort-Object -Unique).Count | Should -Be @($names).Count
+    }
+
+    It 'is governed by exactly one acquisition unit' {
+        $governing = @(
+            $script:Reparsed.acquisition.PSObject.Properties |
+                Where-Object { @($_.Value.data_paths) -contains 'host.windows_optional_features' } |
+                ForEach-Object { $_.Name }
+        )
+        $governing | Should -Be @('host.windows_optional_features.inventory')
+    }
+}
+
+
+Describe 'Schema 1.2 is additive over schema 1.1' {
+
+    It 'still declares exactly the five schema 1.1 envelope sections' {
+        @($script:Fixture.Keys) |
+            Should -Be @('scan_metadata', 'acquisition', 'host', 'security', 'vulnerability')
+    }
+
+    It 'retains the schema 1.1 payload path <_>' -ForEach @(
+        'host.hostname'
+        'host.windows_updates.pending_updates'
+        'host.network_config.tcp_connections'
+        'host.sessions.current_sessions'
+        'security.antivirus.product_name'
+        'vulnerability.token_privileges'
+    ) {
+        # Schema 1.2 is structurally additive: all schema 1.1 paths and
+        # shapes remain unchanged, so no existing path may move, vanish
+        # or change meaning.
+        #
+        # SCOPE OF THIS TEST. It proves PRESERVATION OF EXISTING PATHS.
+        # It does NOT prove compatibility with consumers that reject
+        # newer schema versions: compatibility additionally requires the
+        # consumer to accept schema version 1.2 and ignore the newly
+        # added field, which is a property of the consumer rather than
+        # of this artefact.
+        $current = $script:Reparsed
+        foreach ($segment in ($_ -split '\.')) {
+            $current | Should -Not -BeNullOrEmpty -Because "'$_' must still resolve"
+            $current = $current.$segment
+        }
+        $current | Should -Not -BeNullOrEmpty
+    }
+
+    It 'retains every schema 1.1 acquisition unit' {
+        $emitted = @($script:Reparsed.acquisition.PSObject.Properties.Name)
+        $schema11Units = @(
+            $script:Tranche2AUnitIds + $script:Tranche2B1UnitIds +
+            $script:Tranche2B2UnitIds + $script:Tranche2CUnitIds
+        )
+
+        @($schema11Units).Count | Should -Be 47
+
+        $missing = @($schema11Units | Where-Object { $emitted -notcontains $_ })
+        $missing -join ', ' | Should -BeNullOrEmpty
+    }
+
+    It 'adds exactly one unit over the schema 1.1 contract' {
+        @($script:Schema12UnitIds) | Should -Be @('host.windows_optional_features.inventory')
+        @($script:AllInstrumentedUnitIds).Count | Should -Be 48
+    }
+}
+
+
 Describe 'Schema 1.1 validation rejects non-conforming artefacts' {
 
     It 'identifies the <_> case as invalid' -ForEach @(
@@ -541,6 +678,63 @@ Describe 'Serialisation: nested values survive the configured JSON depth' {
 
         It 'preserves host.network_config.dns_servers[].server_addresses[]' {
             @($script:Reparsed.host.network_config.dns_servers[0].server_addresses).Count | Should -Be 2
+        }
+    }
+
+    Context 'schema 1.2 optional-feature inventory' {
+
+        # Depth 10 is RETAINED for schema 1.2 rather than assumed adequate.
+        # These assert that the new structure actually survives it.
+
+        It 'preserves every host.windows_optional_features[] record' {
+            @($script:Reparsed.host.windows_optional_features).Count |
+                Should -Be @($script:Fixture['host']['windows_optional_features']).Count
+        }
+
+        It 'preserves host.windows_optional_features[].feature_name and .state' {
+            $powerShellV2 = $script:Reparsed.host.windows_optional_features |
+                Where-Object { $_.feature_name -eq 'MicrosoftWindowsPowerShellV2' }
+
+            $powerShellV2               | Should -Not -BeNullOrEmpty
+            $powerShellV2.feature_name  | Should -Be 'MicrosoftWindowsPowerShellV2'
+            $powerShellV2.state         | Should -Be 'EnablePending'
+        }
+
+        It 'preserves the payload-removed state string across serialisation' {
+            $container = $script:Reparsed.host.windows_optional_features |
+                Where-Object { $_.feature_name -eq 'Containers-DisposableClientVM' }
+
+            $container.state | Should -Be 'DisabledWithPayloadRemoved'
+        }
+
+        It 'loses the optional-feature record content when serialised too shallowly (negative control)' {
+            # root(0) -> host(1) -> windows_optional_features(2) ->
+            # record(3) -> scalar(4). Depth 2 is below the record, so the
+            # records cannot be retained intact - if this ever passes, the
+            # positive assertions above have stopped proving anything.
+            $shallow  = $script:Fixture | ConvertTo-Json -Depth 2 -WarningAction SilentlyContinue
+            $reparsed = $shallow | ConvertFrom-Json
+
+            $records = @($reparsed.host.windows_optional_features)
+
+            $faithful = $true
+            if ($records.Count -eq 0) {
+                $faithful = $false
+            }
+            else {
+                foreach ($record in $records) {
+                    if ($record -isnot [System.Management.Automation.PSCustomObject]) {
+                        $faithful = $false
+                        continue
+                    }
+                    $names = @($record.PSObject.Properties.Name)
+                    if ($names -notcontains 'feature_name' -or $names -notcontains 'state') {
+                        $faithful = $false
+                    }
+                }
+            }
+
+            $faithful | Should -BeFalse -Because 'depth 2 sits above the optional-feature record scalars'
         }
     }
 
