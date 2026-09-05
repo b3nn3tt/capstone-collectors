@@ -15,8 +15,12 @@
     depends only on Windows PowerShell 5.1 and built-in Windows providers.
 
     The build concatenates VK.Config.ps1 and VK.Utilities.ps1 first, so the
-    schema 1.1 acquisition helpers are always present in the generated
-    script before any module or runner logic references them.
+    acquisition helpers introduced at schema 1.1 are always present in the
+    generated script before any module or runner logic references them.
+
+    The generated script must remain contract-equivalent to the modular
+    runner, so the module lists and function maps below are kept in the
+    same order the runner executes them.
 
     Usage:
         .\Build-Standalone.ps1
@@ -37,7 +41,7 @@
 
 .NOTES
     Author:  b3nn3tt@hbcomputersecurity.co.uk
-    Version: 2.1.1
+    Version: 2.3.0
 #>
 
 param(
@@ -105,7 +109,8 @@ $hostModuleFiles = @(
     "Host.Processes.ps1",
     "Host.Services.ps1",
     "Host.Drivers.ps1",
-    "Host.USBHistory.ps1"
+    "Host.USBHistory.ps1",
+    "Host.WindowsOptionalFeatures.ps1"
 )
 
 $securityModuleFiles = @(
@@ -319,7 +324,7 @@ foreach ($file in $vulnModuleFiles) {
 [void]$sb.AppendLine("")
 [void]$sb.AppendLine('if (Test-Path $script:ErrorLogPath) { Remove-Item $script:ErrorLogPath }')
 [void]$sb.AppendLine("")
-[void]$sb.AppendLine("# --- Initialise Data (schema 1.1: five ordered sections) ---")
+[void]$sb.AppendLine("# --- Initialise Data (schema 1.2: five ordered sections) ---")
 [void]$sb.AppendLine('$data = [ordered]@{')
 [void]$sb.AppendLine('    "scan_metadata" = [ordered]@{}')
 [void]$sb.AppendLine('    "acquisition"   = [ordered]@{}')
@@ -355,6 +360,7 @@ $hostFunctionMap = @{
     "Host.Services.ps1"        = @{ Func = "Invoke-VKHostServices"; Id = "host.services" }
     "Host.Drivers.ps1"         = @{ Func = "Invoke-VKHostDrivers"; Id = "host.drivers" }
     "Host.USBHistory.ps1"      = @{ Func = "Invoke-VKHostUSBHistory"; Id = "host.usb_history" }
+    "Host.WindowsOptionalFeatures.ps1" = @{ Func = "Invoke-VKHostWindowsOptionalFeatures"; Id = "host.windows_optional_features" }
 }
 
 foreach ($file in $hostModuleFiles) {
@@ -455,7 +461,7 @@ foreach ($file in $vulnModuleFiles) {
 [void]$sb.AppendLine('    "modules_executed"      = @($modulesExecuted)')
 [void]$sb.AppendLine('}')
 [void]$sb.AppendLine("")
-[void]$sb.AppendLine('# --- Acquisition Section (schema 1.1) ---')
+[void]$sb.AppendLine('# --- Acquisition Section (schema 1.2; introduced at 1.1) ---')
 [void]$sb.AppendLine('# Fail-closed backstop: any unresolved unit becomes')
 [void]$sb.AppendLine('# failed / incomplete_collection. Must run before serialisation.')
 [void]$sb.AppendLine('Complete-VKAcquisitionReport')

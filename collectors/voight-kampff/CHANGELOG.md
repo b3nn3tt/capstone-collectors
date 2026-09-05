@@ -10,6 +10,63 @@ All notable changes to the collector and its evidence contract.
 
 ---
 
+## [2.3.0] — complete Windows optional-feature inventory (evidence expansion, tranche 1)
+
+**Schema 1.1 → 1.2, an ADDITIVE increment. JSON depth 10 is retained. The agent now contains 46 modules and 48 acquisition units.**
+
+A MINOR, backwards-compatible evidence expansion. One new host module collects the **complete** Windows optional-feature inventory as raw endpoint evidence.
+
+> **Mock-tested only. No live collector run was performed for 2.3.0.** Not committed, not pushed, not tagged, not frozen, not pilot-ready, not campaign-ready.
+
+### Added
+
+- **`modules/host/Host.WindowsOptionalFeatures.ps1`**, exposing `Invoke-VKHostWindowsOptionalFeatures`.
+- Payload section **`host.windows_optional_features`**.
+- Acquisition unit **`host.windows_optional_features.inventory`**, provider `Get-WindowsOptionalFeature -Online`, governing exactly the one path `host.windows_optional_features`.
+- `host.windows_optional_features` is added to `modules_executed`, appended after `host.usb_history` so **no existing host module's execution position changes**.
+
+### Collection behaviour
+
+- `host.windows_optional_features` is initialised to `null`; the acquisition unit is registered **before** the provider is invoked.
+- Not elevated: DISM is **not invoked at all**, the payload stays `null`, and the unit records `restricted` / `insufficient_privilege`.
+- Elevated: **exactly one** complete query, `Get-WindowsOptionalFeature -Online -ErrorAction Stop`.
+- **Every** feature returned is retained. Each record contains exactly `feature_name` and `state` — nothing else.
+- `FeatureName` is preserved exactly as supplied. `State` is preserved as the provider's own string representation and is **never reduced to a Boolean**: `Enabled`, `Disabled`, `DisabledWithPayloadRemoved`, `EnablePending` and `DisablePending` all survive verbatim.
+- Output is ordered deterministically by `feature_name` using an **ordinal** comparison (`[Array]::Sort` with `[System.StringComparer]::Ordinal`), which is locale-independent and available on Windows PowerShell 5.1. `Sort-Object` is deliberately not used, because it is culture-sensitive.
+- Rejected as malformed provider output, with the whole inventory withheld: a **case-insensitive duplicate** feature name, a record with a **null or empty `FeatureName`**, and a record with a **null or empty `State`**.
+- A **zero-record response is not a genuine Windows state** — every serviceable Windows installation reports optional features. The payload is retained as `null` and the unit records a non-success outcome with category `provider_value_missing`, never a successful empty inventory.
+- Any provider exception retains `null` and produces a machine-readable non-success outcome through the existing acquisition helpers and the shared conservative error classification.
+- A successful query emits the complete array with outcome `success`.
+
+### Evidence boundary
+
+**The collector makes no risk or compliance judgement.** It does not select dissertation-specific feature identifiers, assess CVE applicability, classify risk, or decide applicability. There is deliberately **no project-specific feature allowlist** in the agent: the full inventory is emitted, and **research-specific extraction belongs downstream** in the dissertation artefact.
+
+No `DisplayName`, `Description`, `RestartRequired`, `CustomProperties`, category, security label or other derived interpretation is emitted.
+
+### Changed
+
+- Agent version **2.2.0 → 2.3.0**.
+- Schema version **1.1 → 1.2**, additive. The five-section envelope, the acquisition entry shape, the field order and the four-value outcome vocabulary are unchanged. **No existing field path is added to, removed, moved or redefined**, and no existing field changes meaning. A schema 1.1 consumer that ignores the new section reads a 1.2 artefact exactly as it read a 1.1 one.
+- **JSON depth remains 10**, retained rather than assumed: the new structure nests root → `host` → section → record → scalar, shallower than the deepest existing payload path, and the depth tests assert the new records survive serialisation at 10 with a paired negative control at depth 2.
+- Schema-evolution comments updated in `core/VK.Config.ps1`, `core/VK.Utilities.ps1`, `core/Invoke-VKScan.ps1` and `build/Build-Standalone.ps1`.
+- The generated standalone filename expectation moves to `VoightKampff_Standalone_v2.3.0.ps1`. The builder already derives that name from `$script:VKAgentVersion`; the module list and host function map gained the new module so modular and generated-standalone output remain contract-equivalent.
+- The representative fixture moves to `agent_version = "2.3.0"` / `schema_version = "1.2"` across all 48 acquisition entries and its metadata, and gains both the new acquisition entry and a `host.windows_optional_features` payload exercising all five provider state strings.
+
+### Tests
+
+**94 tests added. Executed result: 753 total, 753 passed, 0 failed, 0 skipped, 0 inconclusive, 0 not run**, suite result `Passed`, under Windows PowerShell **Desktop 5.1.26100.9168** and Pester **6.1.0** with caller-imposed StrictMode `Off`. The agent 2.2.0 baseline was 659/659.
+
+New file `tests/VK.Modules.WindowsOptionalFeatures.Tests.ps1` — **48 focused tests, all providers mocked**, covering: mixed `Enabled`/`Disabled` results; `DisabledWithPayloadRemoved` preserved exactly; both pending-state strings preserved exactly; a non-string enum-like state keeping the provider's own representation; the complete inventory retained rather than an allowlist; deterministic ordinal ordering, plus a re-shuffle case proving the order does not depend on the provider's; case-insensitive duplicate rejection; missing and empty feature name; missing and empty state; the zero-record response resolving to a non-success outcome rather than a successful empty result; a provider exception classified by the shared helper; the non-elevated `restricted` outcome with `Should -Invoke … -Times 0` proving DISM is never called; `data_paths` asserted on both success and failure; and a parameterised case driving all four outcomes to prove no unit is ever left pending, unresolved or outside the permitted vocabulary.
+
+Provider invocation and inventory validation are separated into their own `try`/`catch` blocks. The invocation handler always passes the original error record to `Set-VKAcquisitionFailure`, whatever the exception type; validation runs only after the single query returned, inspects the records already in hand, issues no second query, and records `unavailable` / `provider_value_missing`. A regression context covers a provider raising `System.InvalidOperationException` — the same type the module raises to signal a malformed inventory — proving it follows the shared classifier to `failed` / `unexpected_error` rather than being misreported as missing provider data, and contrasting it against a malformed inventory carrying that identical exception type.
+
+Extended: `VK.OutputContract.Tests.ps1` (exact 48-unit coverage in both directions, exact governed `data_paths`, exact two-field record shape, the five state strings, ordinal ordering, no duplicate name, single governing unit, additivity of 1.2 over 1.1, and depth-10 retention with a depth-2 negative control); `VK.RunnerContract.Tests.ps1` (single invocation, single `modules_executed` entry, build-source mapping, and the established host order asserted unchanged ahead of the appended module); `VK.StandaloneParity.Tests.ps1` (agent 2.3.0, schema 1.2, version-stamped filename, embedded module and unit identifier, single invocation in the generated runner logic, no allowlist, no interpreted field).
+
+**No live collector run was performed, and nothing was committed or pushed.**
+
+---
+
 ## [2.2.0] - Windows Update acquisition semantics and build encoding
 
 **Schema 1.1 and JSON depth 10 remain unchanged. The agent now contains 45 modules and 47 acquisition units.**

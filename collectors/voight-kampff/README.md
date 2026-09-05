@@ -2,15 +2,17 @@
 
 A PowerShell-based Windows evidence collector that produces versioned JSON output with explicit acquisition provenance. The agent runs locally on a host, executes modular checks, and records structured endpoint observations that a separate artefact can ingest.
 
-**Current state:** agent 2.2.0 is mock-tested and targeted live-provider validated; not yet committed, tagged, frozen, formally pilot-ready or campaign-ready.
+**Current state:** agent 2.3.0 is mock-tested only; **no live collector run has been performed for 2.3.0**. Not yet committed, tagged, frozen, formally pilot-ready or campaign-ready.
 
-**Versions:** agent 2.2.0; schema 1.1; JSON depth 10.
+**Versions:** agent 2.3.0; schema 1.2; JSON depth 10.
 
-Agent 2.2.0 is a MINOR, backwards-compatible acquisition uplift. It adds one governed Windows Update acquisition unit so a successful zero result remains distinct from a failed provider query. Schema 1.1 and JSON depth 10 are unchanged. See the [changelog](CHANGELOG.md).
+Agent 2.3.0 is a MINOR, backwards-compatible evidence expansion. It adds the complete Windows optional-feature inventory as raw endpoint evidence, under one new governed acquisition unit. **Schema 1.2 is ADDITIVE over 1.1**: the five-section envelope, the acquisition entry shape and the four-value outcome vocabulary are unchanged, no existing field path moves, vanishes or changes meaning, and a 1.1 consumer that ignores the new section reads a 1.2 artefact exactly as it read a 1.1 one. JSON depth 10 is retained, confirmed by the depth tests against the new structure rather than assumed. See the [changelog](CHANGELOG.md).
 
-**Mock-tested and targeted live-provider validated.** The complete 2.2.0 suite passed **659/659** tests. A separate disposable live run reproduced HRESULT `0x8024402C` and correctly emitted one `failed` / `provider_query_failed` acquisition unit with both pending-update values `null`; the remaining 46 units succeeded.
+**Mock-tested.** The complete 2.3.0 suite passed **753/753** tests under Windows PowerShell Desktop 5.1.26100.9168 and Pester 6.1.0, with 0 failed, 0 skipped, 0 inconclusive and 0 not run. The focused optional-feature suite contributed **48/48**. No live collector was run for this tranche.
 
-**Development state.** Agent 2.2.0 is being prepared on branch `fix/voight-windows-update-acquisition`, based on `main` revision `a11e9cc0ea56c1b77622395c778584d00d8c854c`. Mocked and targeted live validation have passed. **Not yet tagged, frozen, pilot-ready or campaign-ready.**
+**Development state.** Agent 2.3.0 is being prepared on branch `feat/voight-2.3-evidence-expansion`, based on `main` revision `336194bc087e0b40d14f75be8acddc9e081f0701`. Mocked validation has passed; **live-provider validation of the new module has not been performed.** **Not yet tagged, frozen, pilot-ready or campaign-ready.**
+
+**Agent 2.2.0 (historical).** A MINOR acquisition uplift adding one governed Windows Update acquisition unit. Suite: 659/659. A disposable live run reproduced HRESULT `0x8024402C` and emitted one `failed` / `provider_query_failed` unit with both pending-update values `null`; the remaining 46 units succeeded.
 
 ## Design principles
 
@@ -87,6 +89,7 @@ collectors/voight-kampff/
 │   │   ├── Host.Storage.ps1
 │   │   ├── Host.USBHistory.ps1
 │   │   ├── Host.Users.ps1
+│   │   ├── Host.WindowsOptionalFeatures.ps1
 │   │   └── Host.WindowsUpdates.ps1
 │   ├── security/
 │   │   └── ... (15 modules)
@@ -122,7 +125,7 @@ Used for packaging and single-file execution.
 
 ```powershell
 Set-Location ".\collectors\voight-kampff\dist"
-.\VoightKampff_Standalone_v2.2.0.ps1
+.\VoightKampff_Standalone_v2.3.0.ps1
 ```
 
 ### Building the standalone
@@ -154,7 +157,28 @@ The collector does not evaluate C1–C7, calculate scores, determine compliance 
 
 ## Feature-state collection
 
-Windows feature-state collection remains conditional on the frozen contextual registry supplying exact identifiers and authoritative mappings. General feature inventory is out of scope for the collector.
+**Superseded at agent 2.3.0.** The collector now emits the **complete** Windows optional-feature inventory as raw evidence, under `host.windows_optional_features`, governed by the single acquisition unit `host.windows_optional_features.inventory`.
+
+The earlier position — that feature collection had to wait on a frozen contextual registry supplying exact identifiers and authoritative mappings — coupled a *collection* question to an *analysis* question. Collecting everything removes that coupling: the identifiers the research needs are already in the artefact, whatever the registry eventually says.
+
+Each record carries exactly two fields:
+
+| Field | Meaning |
+| --- | --- |
+| `feature_name` | The provider's `FeatureName`, preserved exactly as supplied. |
+| `state` | The provider's own state string, preserved verbatim. |
+
+`state` is **never reduced to a Boolean** and never remapped. `Enabled`, `Disabled`, `DisabledWithPayloadRemoved`, `EnablePending` and `DisablePending` are five distinct observations; collapsing them would destroy the payload distinction and would misrepresent the two pending states as settled ones.
+
+The module emits no `DisplayName`, `Description`, `RestartRequired`, `CustomProperties`, category, security label or any other derived interpretation.
+
+**Research-specific extraction belongs downstream.** There is deliberately **no project-specific feature allowlist in the collector**. Selecting dissertation-relevant identifiers, assessing CVE applicability, classifying risk and making compliance judgements are all operations of the separate dissertation artefact. Voight-Kampff records what the host reported and nothing more.
+
+Records are ordered deterministically by `feature_name` using an **ordinal** comparison, so the same inventory serialises identically regardless of the collecting host's locale.
+
+Rejected as malformed provider output, with the whole inventory withheld rather than partially emitted: a case-insensitive duplicate feature name, a record with no feature name, and a record with no state. A **zero-record response is not a genuine Windows state** — every serviceable Windows installation reports optional features — so it is recorded as a non-success outcome with category `provider_value_missing`, never as a successful empty inventory.
+
+Without elevation the provider is **not invoked at all** — no servicing session is opened — and the unit records `restricted` / `insufficient_privilege` with the payload retained as `null`.
 
 ## Current verification
 
@@ -163,12 +187,14 @@ Windows feature-state collection remains conditional on the frozen contextual re
 | Runtime | Windows PowerShell **Desktop 5.1.26100.9168** |
 | Test framework | Pester **6.1.0** |
 | Caller-imposed StrictMode | **Off** |
-| Total | **659** |
-| Passed | **659** |
+| Total | **753** |
+| Passed | **753** |
 | Failed / Skipped / Inconclusive / Not run | **0 / 0 / 0 / 0** |
 | Suite result | **`Passed`** |
-| Full-suite duration | `00:00:15.6003025` |
-| Coverage | 18 study-relevant modules, 47 acquisition units at agent 2.2.0 |
+| Coverage | 19 study-relevant modules, **46 modules and 48 acquisition units** at agent 2.3.0 |
+| Focused optional-feature suite | 48 passed, 0 failed |
+| Live collector run at 2.3.0 | **None. No live collection was performed for this tranche.** |
+| Agent 2.2.0 baseline (historical) | 659 passed, 0 failed, 0 skipped, 0 inconclusive, 0 not run |
 | Agent 2.1.1 baseline (historical) | 646 passed, 0 failed, 0 skipped, 0 inconclusive, 0 not run |
 | Agent 2.1.0 baseline (historical) | 617 passed, 0 failed, 0 skipped, 0 not run |
 
@@ -176,7 +202,9 @@ A green suite establishes that the implemented contract behaves as specified. It
 
 **On the earlier 21-failure result.** An earlier validation attempt reported 21 failures. That was **validation-harness contamination caused by caller-imposed `StrictMode`, not 21 production defects.** The clean rerun against the committed source, with caller-imposed StrictMode `Off`, passed all **646** tests. The 21-failure figure must not be cited as a defect count.
 
-**Live provider behaviour.** A non-campaign 2.2.0 run on `CAPSTONE-WIN-01` completed from `2026-09-04T08:34:01.0192409Z` to `2026-09-04T08:34:27.2928748Z`. It reproduced HRESULT `0x8024402C`; `host.windows_updates.pending_updates` reported `failed` / `provider_query_failed`, while `pending_count` and `pending_updates` were both `null`. The remaining 46 units succeeded. Evidence SHA-256: `d4347b5fd992ce9286c402b9bcc54a69cb9c574e2860a9b31014107c9ea93d57`. The VM was subsequently reverted to `POST-REHEARSAL__PRE-VK-2.2.0-TEST`.
+**Live provider behaviour at 2.3.0.** None. The optional-feature module has been validated against mocked providers only. `Get-WindowsOptionalFeature -Online` has not been exercised on a live host at this version, and no output from 2.3.0 may be cited as live-provider evidence.
+
+**Live provider behaviour at 2.2.0 (historical).** A non-campaign 2.2.0 run on `CAPSTONE-WIN-01` completed from `2026-09-04T08:34:01.0192409Z` to `2026-09-04T08:34:27.2928748Z`. It reproduced HRESULT `0x8024402C`; `host.windows_updates.pending_updates` reported `failed` / `provider_query_failed`, while `pending_count` and `pending_updates` were both `null`. The remaining 46 units succeeded. Evidence SHA-256: `d4347b5fd992ce9286c402b9bcc54a69cb9c574e2860a9b31014107c9ea93d57`. The VM was subsequently reverted to `POST-REHEARSAL__PRE-VK-2.2.0-TEST`.
 
 ## Running the tests
 

@@ -87,8 +87,13 @@ function Invoke-IfAdmin {
 
 
 # ============================================================
-#  ACQUISITION STATUS  (schema 1.1)
+#  ACQUISITION STATUS  (introduced at schema 1.1; unchanged at 1.2)
 # ============================================================
+# Schema 1.2 is an ADDITIVE increment. It adds one collection unit,
+# host.windows_optional_features.inventory, and changes nothing about the
+# entry shape, the field order, the fail-closed contract or the four-value
+# outcome vocabulary described below.
+#
 # Records, per collection unit, WHETHER COLLECTION WORKED. Nothing here
 # expresses condition applicability, contextual evidence state, confirmed
 # presence or absence, or contextual direction or weight. Those are
@@ -600,7 +605,7 @@ function Complete-VKAcquisitionReport {
 function Get-VKAcquisitionReport {
     <#
     .SYNOPSIS
-        Projects the acquisition store into the schema 1.1 section.
+        Projects the acquisition store into the acquisition section.
 
     .DESCRIPTION
         Emits only the contract fields, in contract order. Module payload

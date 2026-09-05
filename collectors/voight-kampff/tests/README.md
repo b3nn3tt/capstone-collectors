@@ -1,8 +1,12 @@
 # Voight-Kampff Agent Tests
 
-Pester suite covering the runner contract, the schema 1.1 output contract, the fail-closed acquisition helpers, every migrated module across **all current tranches through 2C**, and modular/standalone parity.
+Pester suite covering the runner contract, the schema 1.2 output contract, the fail-closed acquisition helpers, every migrated module across **all current tranches through 2C** plus the 2.3.0 evidence expansion, and modular/standalone parity.
 
-**Authoritative mocked execution result — agent 2.2.0:** Windows PowerShell **Desktop 5.1.26100.9168**, Pester **6.1.0**, StrictMode **Off** — **659 total, 659 passed, 0 failed, 0 skipped, 0 inconclusive, 0 not run**, suite result **`Passed`**, duration **`00:00:15.6003025`**. Coverage spans **18 study-relevant modules and 47 acquisition units** at schema 1.1 and JSON depth 10.
+**Authoritative mocked execution result — agent 2.3.0:** Windows PowerShell **Desktop 5.1.26100.9168**, Pester **6.1.0**, StrictMode **Off** — **753 total, 753 passed, 0 failed, 0 skipped, 0 inconclusive, 0 not run**, suite result **`Passed`**. Coverage spans **19 study-relevant modules, 46 modules and 48 acquisition units** at schema **1.2** and JSON depth 10.
+
+**No live collector run was performed for agent 2.3.0.** The optional-feature module is validated against mocked providers only; `Get-WindowsOptionalFeature -Online` has not been exercised on a live host at this version.
+
+**Agent 2.2.0 baseline (historical):** 659/659 passed.
 
 **Agent 2.1.1 baseline (historical):** 646/646 passed.
 
@@ -10,7 +14,9 @@ Pester suite covering the runner contract, the schema 1.1 output contract, the f
 
 **On the earlier 21-failure result.** An earlier validation attempt of the 2.1.1 suite reported 21 failures. That was **validation-harness contamination caused by caller-imposed `StrictMode` — not 21 production defects.** The clean rerun against the committed source, with caller-imposed StrictMode `Off`, **passed all 646 tests**. The 21-failure figure is not a defect count and must not be cited as one.
 
-**Agent 2.2.0 adds 13 tests:** 10 focused Windows Update cases, one output-contract case and two standalone-parity/UTF-8 cases.
+**Agent 2.3.0 adds 94 tests:** 48 focused Windows optional-feature cases in a new file, plus extensions to the output-contract, runner-contract and standalone-parity suites for schema 1.2.
+
+**Agent 2.2.0 added 13 tests:** 10 focused Windows Update cases, one output-contract case and two standalone-parity/UTF-8 cases.
 
 **Agent 2.1.1 added 29 tests** covering Host.Software, Security.WinRM, Security.DefenderAdvanced and version-stamped standalone generation.
 
@@ -33,9 +39,11 @@ A green suite establishes that the implemented contract behaves as specified. It
 tests/
 |-- README.md
 |-- VK.RunnerContract.Tests.ps1        Static AST analysis of runner and build template
-|-- VK.OutputContract.Tests.ps1        Schema 1.1 envelope, acquisition, versions, depth
+|-- VK.OutputContract.Tests.ps1        Schema 1.2 envelope, acquisition, versions, depth
 |-- VK.Acquisition.Tests.ps1           Fail-closed helper behaviour
 |-- VK.Modules.WindowsUpdates.Tests.ps1 Focused pending-update semantics
+|-- VK.Modules.WindowsOptionalFeatures.Tests.ps1
+|                                      Focused optional-feature inventory semantics
 |-- VK.Modules.Acquisition.Tests.ps1   The three Tranche 2A corrections (mocked providers)
 |-- VK.Modules.Tranche2B1.Tests.ps1    The seven Tranche 2B.1 modules (mocked providers)
 |-- VK.Modules.Tranche2B2.Tests.ps1    The seven Tranche 2B.2 modules (mocked providers)
@@ -105,14 +113,18 @@ Invoke-Pester -Path .\tests -Output Detailed -PassThru |
 
 Static AST analysis. `Host.NetworkConfig` invoked exactly once by the runner and listed once by the build source; no host module invoked twice; runner and build agree on module order; the **five**-section envelope is declared in contract order; `schema_version` and JSON depth come from central config; the acquisition store is initialised before modules run and swept before serialisation.
 
+Schema 1.2 additions: `Invoke-VKHostWindowsOptionalFeatures` invoked exactly once, `host.windows_optional_features` recorded once in `modules_executed`, the build source listing and mapping the new module exactly once, and the **established host-module execution order asserted unchanged ahead of the appended module** — the new module is last, and the fourteen modules before it are asserted in their existing order.
+
 ### VK.OutputContract.Tests.ps1
 
 | Area | Asserts |
 | --- | --- |
-| Central config | agent 2.2.0, schema 1.1, depth 10 |
+| Central config | agent 2.3.0, schema 1.2, depth 10 |
 | Envelope | **exactly five** sections, in order — an exact match, deliberately not a subset or containment check |
 | Metadata | all ten required fields, ISO 8601 UTC timestamps, no duplicate in `modules_executed` |
-| Acquisition | **exact schema-1.1 coverage of all 47 units, asserted in both directions**, including `host.windows_updates.pending_updates`; permitted outcomes; exact governed paths; structured failure data |
+| Acquisition | **exact schema-1.2 coverage of all 48 units, asserted in both directions**, including `host.windows_optional_features.inventory`; permitted outcomes; exact governed paths; structured failure data |
+| Schema 1.2 additivity | all 47 schema-1.1 units still present; representative schema-1.1 payload paths still resolve; exactly one unit added; the envelope unchanged |
+| Optional-feature section | each record has **exactly** `feature_name` and `state`; all five provider state strings preserved unreduced; no `DisplayName` / `RestartRequired` / `CustomProperties` / category / risk / compliance field; deterministic ordinal ordering; no case-insensitive duplicate; exactly one governing unit |
 | Schema validity | all eight invalid fixtures identified as invalid; missing metadata reported, **never repaired into an invented outcome**; representative fixture accepted (positive control) |
 | Legacy 1.0 | recognised as legacy not invalid; four sections; **cannot support empty-result absence** on any path; contrast case showing schema 1.1 success makes absence assessable |
 | Depth 10 | deepest payload paths and acquisition `data_paths`/`error` survive; **negative controls** confirm shallow serialisation genuinely truncates |
@@ -134,9 +146,20 @@ All providers mocked.
 ### VK.Modules.WindowsUpdates.Tests.ps1
 
 All Windows Update providers are mocked. Ten focused tests distinguish a successful empty result from search and session-creation failures. Failure withholds both governed payload values and records a machine-readable `failed` / `provider_query_failed` outcome.
+
+### VK.Modules.WindowsOptionalFeatures.Tests.ps1
+
+The DISM provider is mocked throughout — no servicing session is opened and no live feature state is read. `Get-WindowsOptionalFeature` is not guaranteed to exist on the machine running the suite, so a stub is declared in `BeforeAll` and mocked; a suite that silently skipped on an unserviceable host would prove nothing, and the stub throws if it is ever reached unmocked.
+
+**48 tests** covering: a mixed `Enabled` / `Disabled` inventory; `DisabledWithPayloadRemoved` preserved exactly; `EnablePending` and `DisablePending` preserved exactly and never collapsed into `Enabled` or `Disabled`; a non-string enum-like `State` keeping the provider's own representation; the **complete inventory retained rather than an allowlist**, with a case built from features of no research interest; deterministic **ordinal** ordering, including names whose ordinal and culture-aware orderings differ, plus a re-shuffle case proving the emitted order does not depend on the order the provider returned; case-insensitive duplicate rejection; missing and empty `FeatureName`; missing and empty `State`; a **successful zero-record response resolving to a non-success outcome with `provider_value_missing`**, not a successful empty inventory; a provider exception classified by the shared helper rather than a hardcoded outcome; the non-elevated `restricted` / `insufficient_privilege` outcome with `Should -Invoke … -Times 0 -Exactly` proving DISM is never called; `data_paths` asserted on both success and failure; and a parameterised case driving all four outcomes to prove the unit is never left pending, unresolved, `incomplete_collection` or outside the permitted vocabulary.
+
+Every malformed-output case asserts the **whole inventory is withheld** — `ReferenceEquals($null, …)`, not merely an empty collection — so a partial or repaired inventory cannot pass.
+
+A regression context covers the **provider** raising `System.InvalidOperationException` — the same type the module raises itself to signal a malformed inventory. Because provider invocation and inventory validation now sit in separate `try`/`catch` blocks, and the invocation handler always passes the original error record to the shared classifier, that case resolves to `failed` / `unexpected_error` rather than being misreported as `unavailable` / `provider_value_missing`. The outcome and category are compared against an independently computed `Get-VKAcquisitionClassification` result, the original `exception_type` is asserted, a contrast case proves a malformed inventory carrying that identical exception type still yields `provider_value_missing`, and `Should -Invoke … -Times 1 -Exactly` proves no second provider query is issued.
+
 ### VK.StandaloneParity.Tests.ps1
 
-Static parity of all ten metadata fields and all five envelope sections. The generated standalone parses successfully; declares schema 1.1, agent 2.2.0 and depth 10; contains all 47 acquisition units; preserves strict UTF-8 source text; remains self-contained; and is never executed by the test suite.
+Static parity of all ten metadata fields and all five envelope sections. The generated standalone parses successfully; declares schema 1.2, agent 2.3.0 and depth 10; is written to `VoightKampff_Standalone_v2.3.0.ps1`; contains all 48 acquisition units; embeds `Invoke-VKHostWindowsOptionalFeatures` and invokes it exactly once in the generated runner logic; carries **no project-specific feature allowlist** and no interpreted optional-feature field; preserves strict UTF-8 source text; remains self-contained; and is never executed by the test suite.
 
 **No test is silently skipped.** Generation runs in a `BeforeAll` during the run phase, never behind a `-Skip:` expression evaluated at discovery. If the build fails, that is surfaced as a **failing test** carrying the captured `GenerationError`, and the dependent tests fail on their own assertions rather than disappearing from the report. The authoritative run records **0 skipped and 0 not run**.
 
@@ -160,7 +183,7 @@ Highlights: Identification's guarded `BuildNumber` (never cast to `0`) and proof
 
 A final parameterised Describe denies every provider at once and asserts the shared contract across all twelve units — including that both instrumented summary counts remain null. `host.identification.hostname` is legitimately excluded from the "no successes" assertion because it reads an environment variable rather than a mocked provider.
 
-The output-contract suite additionally asserts **exact 47-unit coverage in both directions** and exact governed `data_paths`, including `host.windows_updates.pending_updates`. Standalone parity verifies all current unit identifiers and strict UTF-8 generation.
+The output-contract suite additionally asserts **exact 48-unit coverage in both directions** and exact governed `data_paths`, including `host.windows_updates.pending_updates` and `host.windows_optional_features.inventory`. Standalone parity verifies all current unit identifiers and strict UTF-8 generation.
 
 ### VK.Modules.Sessions.Tests.ps1
 
@@ -176,9 +199,12 @@ A shared-contract Describe fails every provider at once and asserts no unit succ
 
 ## What is NOT covered yet
 
-Existing-module migration completed at 2B.2; the session extension landed at 2C. Deferred:
+Existing-module migration completed at 2B.2; the session extension landed at 2C; the complete optional-feature inventory landed at 2.3.0. Deferred:
 
-- registry-restricted Windows feature-state collection (C2/C3) — **a pilot blocker**;
+- **live-provider validation of the optional-feature module** — the 2.3.0 suite is mocked only, and no live collector run was performed;
+- active network-category collection;
+- firewall-filter enrichment;
+- correlation of optional features with services, processes, listeners, Nessus or CIS-CAT — and any other analytical use of the inventory, which belongs downstream and not in the collector;
 - Event 4624 recent-logon evidence — **deliberately excluded**, not deferred (audit-policy history is not observable, so empty results could never mean "no recent logon");
 - validation of both extensions and the collection freeze;
 - the active-firewall-profile extension (enhancement, not a prerequisite);
