@@ -26,7 +26,7 @@ operations belong to the separate MSc dissertation artefact.
 
 The boundary is deliberate:
 
-- **Voight-Kampff** ends with raw schema-1.1 JSON and acquisition provenance.
+- **Voight-Kampff** ends with raw schema-1.2 JSON (Voight-Kampff 2.3.0) and acquisition provenance.
 - **VulnSight** ends with raw `.nessus` evidence and an acquisition manifest.
 - **The MSc artefact** begins with validation, controlled parsing,
   pseudonymisation, filtering, normalisation and source reconciliation.

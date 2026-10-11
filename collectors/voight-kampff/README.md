@@ -2,7 +2,12 @@
 
 A PowerShell-based Windows evidence collector that produces versioned JSON output with explicit acquisition provenance. The agent runs locally on a host, executes modular checks, and records structured endpoint observations that a separate artefact can ingest.
 
-**Current state, as recorded on 2026-09-05.** Agent 2.3.0 is mock-tested and development live-validated. It is committed on branch `feat/voight-2.3-evidence-expansion`; at the time of this record it is **pending merge**, and it is **untagged and unfrozen**. It is **not** formally pilot-ready or campaign-ready. Merge, tag and freeze states change independently of this file - treat the repository, not this paragraph, as authoritative for them.
+**Project checkpoint, 10 October 2026.** The recovered collector repository is
+on clean `main` at `ac75457dc5bbc27adff22ef37ff67a673d5e9da1`, supplying agent
+2.3.0/schema 1.2. The current C2 collection/integration pilot has completed;
+formal matched-target preparation and the collection/configuration freeze remain
+ahead. The September development observations below retain their original timing
+and are not current branch or formal-campaign status.
 
 **Versions:** agent 2.3.0; schema 1.2; JSON depth 10.
 
@@ -10,7 +15,7 @@ Agent 2.3.0 is a MINOR, backwards-compatible evidence expansion. It adds the com
 
 **Mock-tested and development live-validated.** The complete 2.3.0 suite passed **753/753** tests under Windows PowerShell Desktop 5.1.26100.9168 and Pester 6.1.0, with 0 failed, 0 skipped, 0 inconclusive and 0 not run. The focused optional-feature suite contributed **48/48**. A separate development live validation on 2026-09-05 returned 137 valid optional-feature records, 48/48 successful acquisition units, no duplicate feature names, no malformed records and correct ordinal ordering.
 
-**Development state.** Agent 2.3.0 was developed on branch `feat/voight-2.3-evidence-expansion`, based on `main` revision `336194bc087e0b40d14f75be8acddc9e081f0701`. Its source provenance is implementation commit `2f93b4b9bd19329952c22de47ee587483882f1f3`. Mocked validation and development live validation have both passed. **At the time of this record the branch is pending merge; the agent is untagged, unfrozen, and neither pilot-ready nor campaign-ready.**
+**Development state, recorded 5 September 2026.** Agent 2.3.0 was developed on branch `feat/voight-2.3-evidence-expansion`, based on `main` revision `336194bc087e0b40d14f75be8acddc9e081f0701`. Its source provenance is implementation commit `2f93b4b9bd19329952c22de47ee587483882f1f3`. Mocked validation and development live validation have both passed. **At the time of this record the branch is pending merge; the agent is untagged, unfrozen, and neither pilot-ready nor campaign-ready.**
 
 **Agent 2.2.0 (historical).** A MINOR acquisition uplift adding one governed Windows Update acquisition unit. Suite: 659/659. A disposable live run reproduced HRESULT `0x8024402C` and emitted one `failed` / `provider_query_failed` unit with both pending-update values `null`; the remaining 46 units succeeded.
 
